@@ -1,227 +1,176 @@
---[[ YINETSU SPY — Ultra-Premium Rebuild
-     All original exploit logic preserved. Visual layer fully redesigned. ]]
+--[[
+    YINETSU SPY VIP | REDESIGNED v2.0
+    - Fixed avatar / player name display
+    - Settings page (themes + theme editor + save/load)
+    - Full theme color transitions on ALL gui elements
+    - All pages scrollable
+    - Editable spam (count + interval, parallel fire)
+    - Bigger UI (1080x660), cleaner buttons
+]]
 
 if getgenv().YinetsuExecuted then return end
 getgenv().YinetsuExecuted = true
 getgenv().YinetsuUIActive = true
 
--- [[ SERVICES ]]
-local CoreGui = game:GetService("CoreGui")
-local RunService = game:GetService("RunService")
-local HttpService = game:GetService("HttpService")
-local VirtualUser = game:GetService("VirtualUser")
+--==============================================================
+-- SERVICES
+--==============================================================
+local CoreGui           = game:GetService("CoreGui")
+local RunService        = game:GetService("RunService")
+local HttpService       = game:GetService("HttpService")
+local VirtualUser       = game:GetService("VirtualUser")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Players = game:GetService("Players")
-local TweenService = game:GetService("TweenService")
-local UserInputService = game:GetService("UserInputService")
+local Players           = game:GetService("Players")
+local TweenService      = game:GetService("TweenService")
+local UserInputService  = game:GetService("UserInputService")
+local Lighting          = game:GetService("Lighting")
+local Stats             = game:GetService("Stats")
+local TeleportService   = game:GetService("TeleportService")
 
 local LocalPlayer = Players.LocalPlayer
 
--- ============================================================
--- THEME SYSTEM
--- ============================================================
-local Themes = {
-    NeoCyberpunk = {
-        Name = "🌌 Neo Cyberpunk",
-        Background = Color3.fromRGB(10, 10, 14),
-        Panel = Color3.fromRGB(18, 18, 24),
-        PanelAlt = Color3.fromRGB(24, 24, 32),
-        Border = Color3.fromRGB(255, 40, 200),
-        BorderAlt = Color3.fromRGB(0, 240, 255),
-        Accent = Color3.fromRGB(255, 40, 200),
-        Text = Color3.fromRGB(240, 245, 255),
-        TextDim = Color3.fromRGB(150, 155, 175),
-        Highlight = Color3.fromRGB(0, 240, 255),
-        Danger = Color3.fromRGB(255, 70, 90),
-        Success = Color3.fromRGB(0, 240, 150),
-    },
-    FrostbiteIce = {
-        Name = "🧊 Frostbite Ice",
-        Background = Color3.fromRGB(14, 18, 24),
-        Panel = Color3.fromRGB(22, 28, 38),
-        PanelAlt = Color3.fromRGB(30, 38, 50),
-        Border = Color3.fromRGB(140, 210, 255),
-        BorderAlt = Color3.fromRGB(220, 240, 255),
-        Accent = Color3.fromRGB(120, 190, 255),
-        Text = Color3.fromRGB(235, 245, 255),
-        TextDim = Color3.fromRGB(150, 170, 195),
-        Highlight = Color3.fromRGB(255, 255, 255),
-        Danger = Color3.fromRGB(255, 90, 110),
-        Success = Color3.fromRGB(120, 230, 200),
-    },
-    AmethystVoid = {
-        Name = "🔮 Amethyst Void",
-        Background = Color3.fromRGB(14, 10, 22),
-        Panel = Color3.fromRGB(24, 16, 36),
-        PanelAlt = Color3.fromRGB(34, 22, 50),
-        Border = Color3.fromRGB(190, 140, 255),
-        BorderAlt = Color3.fromRGB(230, 200, 255),
-        Accent = Color3.fromRGB(180, 120, 255),
-        Text = Color3.fromRGB(240, 235, 255),
-        TextDim = Color3.fromRGB(165, 150, 195),
-        Highlight = Color3.fromRGB(230, 200, 255),
-        Danger = Color3.fromRGB(255, 100, 140),
-        Success = Color3.fromRGB(150, 230, 200),
-    },
-    RoseGoldLuxury = {
-        Name = "🪵 Rose Gold Luxury",
-        Background = Color3.fromRGB(22, 16, 14),
-        Panel = Color3.fromRGB(34, 24, 22),
-        PanelAlt = Color3.fromRGB(48, 34, 30),
-        Border = Color3.fromRGB(230, 160, 130),
-        BorderAlt = Color3.fromRGB(255, 220, 190),
-        Accent = Color3.fromRGB(235, 160, 130),
-        Text = Color3.fromRGB(250, 240, 230),
-        TextDim = Color3.fromRGB(190, 165, 150),
-        Highlight = Color3.fromRGB(255, 230, 200),
-        Danger = Color3.fromRGB(230, 90, 90),
-        Success = Color3.fromRGB(200, 220, 150),
-    },
-    StealthMonochrome = {
-        Name = "🕶️ Stealth Monochrome",
-        Background = Color3.fromRGB(6, 6, 6),
-        Panel = Color3.fromRGB(14, 14, 14),
-        PanelAlt = Color3.fromRGB(22, 22, 22),
-        Border = Color3.fromRGB(160, 160, 160),
-        BorderAlt = Color3.fromRGB(230, 230, 230),
-        Accent = Color3.fromRGB(200, 200, 200),
-        Text = Color3.fromRGB(245, 245, 245),
-        TextDim = Color3.fromRGB(150, 150, 150),
-        Highlight = Color3.fromRGB(255, 255, 255),
-        Danger = Color3.fromRGB(220, 80, 80),
-        Success = Color3.fromRGB(180, 220, 180),
-    },
+--==============================================================
+-- CONFIG
+--==============================================================
+local CONFIG = {
+    IntroDuration   = 3.0,
+    ChromaSpeed     = 0.16,
+    MonitorInterval = 0.5,
+    MainWidth       = 1080,
+    MainHeight      = 660,
+    MinWidth        = 720,
+    MinHeight       = 460,
 }
 
-local CurrentTheme = Themes.NeoCyberpunk
-local ThemeRegistry = {}
+--==============================================================
+-- THEMES
+--==============================================================
+local Themes = {
+    Midnight  = { Background=Color3.fromRGB(14,17,27),  Surface=Color3.fromRGB(23,28,42),  SurfaceAlt=Color3.fromRGB(31,38,55),  Accent=Color3.fromRGB(120,105,255), AccentAlt=Color3.fromRGB(57,210,255),  Text=Color3.fromRGB(240,243,255), Muted=Color3.fromRGB(157,167,190), Success=Color3.fromRGB(92,225,160),  Warning=Color3.fromRGB(255,198,92),  Danger=Color3.fromRGB(255,100,120) },
+    Ocean     = { Background=Color3.fromRGB(8,23,34),   Surface=Color3.fromRGB(14,39,54),  SurfaceAlt=Color3.fromRGB(20,54,70),  Accent=Color3.fromRGB(45,190,230),  AccentAlt=Color3.fromRGB(74,255,218),  Text=Color3.fromRGB(232,250,255), Muted=Color3.fromRGB(142,188,203), Success=Color3.fromRGB(92,225,160),  Warning=Color3.fromRGB(255,198,92),  Danger=Color3.fromRGB(255,100,120) },
+    Sakura    = { Background=Color3.fromRGB(33,19,31),  Surface=Color3.fromRGB(49,29,47),  SurfaceAlt=Color3.fromRGB(66,38,60),  Accent=Color3.fromRGB(255,117,180), AccentAlt=Color3.fromRGB(205,144,255), Text=Color3.fromRGB(255,239,248), Muted=Color3.fromRGB(204,161,190), Success=Color3.fromRGB(125,231,174), Warning=Color3.fromRGB(255,204,115), Danger=Color3.fromRGB(255,105,139) },
+    Emerald   = { Background=Color3.fromRGB(12,25,21),  Surface=Color3.fromRGB(20,41,34),  SurfaceAlt=Color3.fromRGB(28,56,46),  Accent=Color3.fromRGB(59,218,147),  AccentAlt=Color3.fromRGB(167,255,110), Text=Color3.fromRGB(234,255,243), Muted=Color3.fromRGB(153,193,169), Success=Color3.fromRGB(92,225,160),  Warning=Color3.fromRGB(255,198,92),  Danger=Color3.fromRGB(255,100,120) },
+    Sunset    = { Background=Color3.fromRGB(32,19,26),  Surface=Color3.fromRGB(49,29,39),  SurfaceAlt=Color3.fromRGB(68,39,49),  Accent=Color3.fromRGB(255,126,86),  AccentAlt=Color3.fromRGB(255,194,94),  Text=Color3.fromRGB(255,242,233), Muted=Color3.fromRGB(207,167,152), Success=Color3.fromRGB(128,229,153), Warning=Color3.fromRGB(255,202,104), Danger=Color3.fromRGB(255,100,120) },
+    Violet    = { Background=Color3.fromRGB(23,15,38),  Surface=Color3.fromRGB(37,25,58),  SurfaceAlt=Color3.fromRGB(50,34,77),  Accent=Color3.fromRGB(173,103,255), AccentAlt=Color3.fromRGB(112,137,255), Text=Color3.fromRGB(246,238,255), Muted=Color3.fromRGB(184,163,212), Success=Color3.fromRGB(116,232,170), Warning=Color3.fromRGB(255,198,92),  Danger=Color3.fromRGB(255,100,120) },
+    Light     = { Background=Color3.fromRGB(238,242,250),Surface=Color3.fromRGB(255,255,255),SurfaceAlt=Color3.fromRGB(224,231,244),Accent=Color3.fromRGB(91,91,230),   AccentAlt=Color3.fromRGB(0,164,198),   Text=Color3.fromRGB(30,37,55),   Muted=Color3.fromRGB(102,113,136), Success=Color3.fromRGB(24,156,99),   Warning=Color3.fromRGB(193,122,0),   Danger=Color3.fromRGB(207,49,76) },
+    Cyberpunk = { Background=Color3.fromRGB(10,5,20),   Surface=Color3.fromRGB(25,10,45),  SurfaceAlt=Color3.fromRGB(40,15,70),  Accent=Color3.fromRGB(255,20,147),  AccentAlt=Color3.fromRGB(0,255,255),   Text=Color3.fromRGB(255,240,255), Muted=Color3.fromRGB(180,140,220), Success=Color3.fromRGB(0,255,150),   Warning=Color3.fromRGB(255,220,0),   Danger=Color3.fromRGB(255,50,90) },
+    Mono      = { Background=Color3.fromRGB(18,18,20),  Surface=Color3.fromRGB(28,28,32),  SurfaceAlt=Color3.fromRGB(42,42,48),  Accent=Color3.fromRGB(220,220,225), AccentAlt=Color3.fromRGB(160,160,170), Text=Color3.fromRGB(240,240,245), Muted=Color3.fromRGB(150,150,155), Success=Color3.fromRGB(190,190,195), Warning=Color3.fromRGB(230,230,235), Danger=Color3.fromRGB(255,255,255) },
+}
 
-local function registerThemed(instance, propName, themeKey)
-    table.insert(ThemeRegistry, {obj = instance, prop = propName, key = themeKey})
-    instance[propName] = CurrentTheme[themeKey]
+local currentThemeName = "Midnight"
+local currentTheme     = Themes[currentThemeName]
+
+--==============================================================
+-- THEME REGISTRY (all themed elements register here)
+--==============================================================
+local themeRegistry = {}  -- {el=Instance, kind="bg"/"text"/"stroke"/"placeholder", role="Accent"}
+local chromaStrokes = {}
+
+local function reg(el, kind, role)
+    if el then table.insert(themeRegistry, {el=el, kind=kind, role=role}) end
+    return el
 end
 
-local function tweenTheme(obj, prop, col)
-    if not obj or not obj.Parent then return end
-    TweenService:Create(obj, TweenInfo.new(0.35, Enum.EasingStyle.Quad), {[prop] = col}):Play()
+--==============================================================
+-- HELPERS
+--==============================================================
+local connections = {}
+local isDestroyed = false
+local function track(c) table.insert(connections, c); return c end
+
+local function create(cls, props, parent)
+    local i = Instance.new(cls)
+    for k,v in pairs(props or {}) do i[k] = v end
+    i.Parent = parent
+    return i
 end
 
-local function applyTheme(name)
-    CurrentTheme = Themes[name] or Themes.NeoCyberpunk
-    for _, e in ipairs(ThemeRegistry) do
-        if e.obj and e.obj.Parent then
-            local t = CurrentTheme[e.key]
-            if t then tweenTheme(e.obj, e.prop, t) end
-        end
+local function corner(p, r)
+    return create("UICorner", {CornerRadius=UDim.new(0, r or 10)}, p)
+end
+
+local function stroke(p, role, thick, trans, chroma)
+    role = role or "Accent"
+    local s = create("UIStroke", {
+        Color = currentTheme[role] or currentTheme.Accent,
+        Thickness = thick or 1,
+        Transparency = trans or 0,
+        ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+    }, p)
+    reg(s, "stroke", role)
+
+    if chroma then
+        local g = create("UIGradient", {
+            Color = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, currentTheme.Accent),
+                ColorSequenceKeypoint.new(0.5, currentTheme.AccentAlt),
+                ColorSequenceKeypoint.new(1, currentTheme.Accent),
+            }),
+            Rotation = 0,
+        }, s)
+        table.insert(chromaStrokes, {Stroke=s, Gradient=g})
     end
-end
-
--- ============================================================
--- UTILITIES
--- ============================================================
-local function makeCorner(p, r)
-    local c = Instance.new("UICorner", p)
-    c.CornerRadius = UDim.new(0, r or 8)
-    return c
-end
-
-local function makeStroke(p, col, thick, transp)
-    local s = Instance.new("UIStroke", p)
-    s.Color = col or CurrentTheme.Border
-    s.Thickness = thick or 1
-    s.Transparency = transp or 0
-    s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
     return s
 end
 
-local function makeGradientStroke(p, colA, colB, thick, rot)
-    local s = Instance.new("UIStroke", p)
-    s.Thickness = thick or 1.4
-    s.Color = Color3.new(1,1,1)
-    s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-    local g = Instance.new("UIGradient", s)
-    g.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, colA),
-        ColorSequenceKeypoint.new(0.5, colB),
-        ColorSequenceKeypoint.new(1, colA),
-    })
-    g.Rotation = rot or 90
-    return s, g
+local function padding(p, l, r, t, b)
+    return create("UIPadding", {
+        PaddingLeft   = UDim.new(0, l or 0),
+        PaddingRight  = UDim.new(0, r or 0),
+        PaddingTop    = UDim.new(0, t or 0),
+        PaddingBottom = UDim.new(0, b or 0),
+    }, p)
 end
 
-local function makePadding(p, px)
-    local pad = Instance.new("UIPadding", p)
-    pad.PaddingTop = UDim.new(0, px)
-    pad.PaddingBottom = UDim.new(0, px)
-    pad.PaddingLeft = UDim.new(0, px)
-    pad.PaddingRight = UDim.new(0, px)
-    return pad
+local function label(parent, text, size, pos, fs, role)
+    role = role or "Text"
+    local l = create("TextLabel", {
+        BackgroundTransparency = 1,
+        Text = text, Size = size, Position = pos,
+        Font = Enum.Font.Gotham, TextSize = fs or 14,
+        TextColor3 = currentTheme[role] or currentTheme.Text,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        TextYAlignment = Enum.TextYAlignment.Center,
+    }, parent)
+    reg(l, "text", role)
+    return l
 end
 
-local function tw(obj, t, props, style, dir)
-    local ti = TweenInfo.new(t or 0.25, style or Enum.EasingStyle.Quad, dir or Enum.EasingDirection.Out)
-    local a = TweenService:Create(obj, ti, props)
-    a:Play()
-    return a
+local function panel(parent, name, size, pos)
+    local p = create("Frame", {
+        Name = name, Size = size, Position = pos,
+        BackgroundColor3 = currentTheme.Surface, BorderSizePixel = 0,
+    }, parent)
+    reg(p, "bg", "Surface")
+    corner(p, 12)
+    stroke(p, "Accent", 1, 0.45, true)
+    return p
 end
 
--- ============================================================
--- PREMIUM BUTTON PHYSICS
--- ============================================================
-local function makeButtonPremium(button, opts)
-    opts = opts or {}
-    local baseColor = opts.color or button.BackgroundColor3
-    local accent = opts.accent or CurrentTheme.Border
-    local baseSize = button.Size
-    local expand = opts.expand or 2
-    local shrink = opts.shrink or 4
-
-    button.AutoButtonColor = false
-
-    button.MouseEnter:Connect(function()
-        tw(button, 0.2, {BackgroundColor3 = baseColor:Lerp(Color3.new(1,1,1), 0.14)})
-        tw(button, 0.18, {Size = UDim2.new(baseSize.X.Scale, baseSize.X.Offset + expand, baseSize.Y.Scale, baseSize.Y.Offset + expand)},
-            Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-    end)
-    button.MouseLeave:Connect(function()
-        tw(button, 0.25, {BackgroundColor3 = baseColor})
-        tw(button, 0.22, {Size = baseSize})
-    end)
-    button.MouseButton1Down:Connect(function()
-        tw(button, 0.08, {Size = UDim2.new(baseSize.X.Scale, baseSize.X.Offset - shrink, baseSize.Y.Scale, baseSize.Y.Offset - shrink)})
-    end)
-    button.MouseButton1Up:Connect(function()
-        tw(button, 0.15, {Size = UDim2.new(baseSize.X.Scale, baseSize.X.Offset + expand, baseSize.Y.Scale, baseSize.Y.Offset + expand)},
-            Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-    end)
-    return button
-end
-
--- ============================================================
--- YINETSU BRAIN + SERIALIZER (unchanged)
--- ============================================================
+--==============================================================
+-- SERIALIZERS
+--==============================================================
 local function yinetsuBeautify(v, indent, visited)
     indent = indent or 0; visited = visited or {}
     if visited[v] then return "recursive_table" end
     visited[v] = true
     local spacing = string.rep(" ", indent)
     local t = typeof(v)
-    if t == "number" or t == "boolean" then return tostring(v)
-    elseif t == "string" then return '"' .. v:gsub('"', '\\"') .. '"'
-    elseif t == "Vector3" then return "Vector3.new("..tostring(v)..")"
-    elseif t == "Vector2" then return "Vector2.new("..tostring(v)..")"
-    elseif t == "CFrame" then return "CFrame.new("..tostring(v)..")"
-    elseif t == "Color3" then return "Color3.new("..tostring(v)..")"
-    elseif t == "UDim2" then return "UDim2.new("..tostring(v)..")"
-    elseif t == "EnumItem" then return tostring(v)
-    elseif t == "Instance" then return v:GetFullName()
-    elseif t == "table" then
-        local s = "{\n"; local count = 0
-        for k, val in next, v do
-            count = count + 1
-            s = s .. spacing .. " [" .. yinetsuBeautify(k, indent+1, visited) .. "] = " .. yinetsuBeautify(val, indent+1, visited) .. ",\n"
+    if t=="number" or t=="boolean" then return tostring(v)
+    elseif t=="string" then return '"'..v:gsub('"','\\"')..'"'
+    elseif t=="Vector3" then return "Vector3.new("..tostring(v)..")"
+    elseif t=="Vector2" then return "Vector2.new("..tostring(v)..")"
+    elseif t=="CFrame" then return "CFrame.new("..tostring(v)..")"
+    elseif t=="Color3" then return "Color3.new("..tostring(v)..")"
+    elseif t=="EnumItem" then return tostring(v)
+    elseif t=="Instance" then return v:GetFullName()
+    elseif t=="table" then
+        local s="{\n"; local count=0
+        for k,val in next,v do
+            count=count+1
+            s=s..spacing.." ["..yinetsuBeautify(k,indent+1,visited).."] = "..yinetsuBeautify(val,indent+1,visited)..",\n"
         end
-        return count == 0 and "{}" or s .. spacing .. "}"
+        return count==0 and "{}" or s..spacing.."}"
     end
     return "nil"
 end
@@ -231,2007 +180,1382 @@ local function v2s(v, visited)
     if visited[v] then return "recursive_table" end
     visited[v] = true
     local t = typeof(v)
-    if t == "number" or t == "boolean" then return tostring(v)
-    elseif t == "string" then return '"' .. v:gsub('"', '\\"') .. '"'
-    elseif t == "Vector3" then return "Vector3.new("..tostring(v)..")"
-    elseif t == "Vector2" then return "Vector2.new("..tostring(v)..")"
-    elseif t == "CFrame" then return "CFrame.new("..tostring(v)..")"
-    elseif t == "Color3" then return "Color3.new("..tostring(v)..")"
-    elseif t == "EnumItem" then return tostring(v)
-    elseif t == "Instance" then return v:GetFullName()
-    elseif t == "table" then
-        local s = "{"
-        for k, val in next, v do
-            s = s .. "[" .. v2s(k, visited) .. "] = " .. v2s(val, visited) .. ", "
-        end
-        return s:sub(1, #s-2) .. "}"
+    if t=="number" or t=="boolean" then return tostring(v)
+    elseif t=="string" then return '"'..v:gsub('"','\\"')..'"'
+    elseif t=="Vector3" then return "Vector3.new("..tostring(v)..")"
+    elseif t=="Vector2" then return "Vector2.new("..tostring(v)..")"
+    elseif t=="CFrame" then return "CFrame.new("..tostring(v)..")"
+    elseif t=="Color3" then return "Color3.new("..tostring(v)..")"
+    elseif t=="EnumItem" then return tostring(v)
+    elseif t=="Instance" then return v:GetFullName()
+    elseif t=="table" then
+        local s="{" for k,val in next,v do s=s.."["..v2s(k,visited).."] = "..v2s(val,visited)..", " end
+        return s:sub(1,#s-2).."}"
     end
     return "nil"
 end
 
--- ============================================================
--- STATE VARS (all preserved from original)
--- ============================================================
-local selectedRemote = nil
-local selectedArgs = {}
-local multiList = {}
-local multiMode = false
-local scheduled = {}
-local blacklist = {}
-local blocklist = {}
-local looping = false
-local autoClear = false
-local spamBlock = false
-local spamCount = {}
+--==============================================================
+-- STATE
+--==============================================================
+local selectedRemote, selectedArgs
+local multiList, multiMode = {}, false
+local scheduled, blacklist, blocklist = {}, {}, {}
 local recording = false
 local recordedSeq = {}
 local sniperMode = false
-local modifierActive = false
-local modTarget = ""
-local modReplace = ""
-local negateActive = false
-local multActive = false
-local cachedModTarget = ""
-local cachedModReplace = ""
+local modifierActive, negateActive, multActive = false, false, false
+local cachedModTarget, cachedModReplace = "", ""
 local layoutOrderNum = 999999999
-local remoteLogs = {}
+local remoteLogs, logQueue = {}, {}
 local MAX_LOGS = 300
-local logQueue = {}
 
--- ============================================================
+local isMinimized = false
+local isFPSBoostEnabled = false
+local isTeleporting = false
+local originalHook = nil
+
+local appStartedAt = os.clock()
+local fpsCounter, currentFPS, lastFPSUpdate = 0, 0, os.clock()
+
+local originalLighting = {
+    GlobalShadows = Lighting.GlobalShadows,
+    FogEnd = Lighting.FogEnd,
+    Brightness = Lighting.Brightness,
+}
+local originalEffects = {}
+
+--==============================================================
 -- FILE SYSTEM
--- ============================================================
+--==============================================================
 local gPath = "Yinetsu_Logs/" .. tostring(game.GameId)
 local autoLoadPath = gPath .. "/_autoload.json"
+local settingsPath = "Yinetsu_Logs/_settings.json"
+
 local function ensureFolder()
     if not isfolder("Yinetsu_Logs") then makefolder("Yinetsu_Logs") end
     if not isfolder(gPath) then makefolder(gPath) end
 end
-ensureFolder()
+pcall(ensureFolder)
 
--- ============================================================
--- CINEMATIC INTRO
--- ============================================================
-local IntroGui = Instance.new("ScreenGui")
-IntroGui.Name = "YinetsuIntro"
-IntroGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-IntroGui.IgnoreGuiInset = true
-IntroGui.DisplayOrder = 99999
-IntroGui.ResetOnSpawn = false
-IntroGui.Parent = CoreGui
+--==============================================================
+-- DASHBOARD LOG
+--==============================================================
+local logEntries = {}
+local LogView
 
-local introRoot = Instance.new("Frame", IntroGui)
-introRoot.Size = UDim2.new(1, 0, 1, 0)
-introRoot.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-introRoot.BorderSizePixel = 0
-
-local introLogo = Instance.new("TextLabel", introRoot)
-introLogo.Size = UDim2.new(1, 0, 0, 80)
-introLogo.Position = UDim2.new(0, 0, 0.4, -60)
-introLogo.BackgroundTransparency = 1
-introLogo.Text = "YINETSU SPY"
-introLogo.TextColor3 = Color3.fromRGB(0, 240, 255)
-introLogo.Font = Enum.Font.GothamBlack
-introLogo.TextSize = 54
-introLogo.TextTransparency = 1
-
-local introSub = Instance.new("TextLabel", introRoot)
-introSub.Size = UDim2.new(1, 0, 0, 20)
-introSub.Position = UDim2.new(0, 0, 0.4, 22)
-introSub.BackgroundTransparency = 1
-introSub.Text = "P R O   E D I T I O N"
-introSub.TextColor3 = Color3.fromRGB(255, 40, 200)
-introSub.Font = Enum.Font.GothamBold
-introSub.TextSize = 12
-introSub.TextTransparency = 1
-
-local introLog = Instance.new("TextLabel", introRoot)
-introLog.Size = UDim2.new(1, 0, 0, 18)
-introLog.Position = UDim2.new(0, 0, 0.58, 0)
-introLog.BackgroundTransparency = 1
-introLog.Text = ""
-introLog.TextColor3 = Color3.fromRGB(190, 195, 220)
-introLog.Font = Enum.Font.Code
-introLog.TextSize = 13
-introLog.TextTransparency = 1
-
-local barTrack = Instance.new("Frame", introRoot)
-barTrack.Size = UDim2.new(0, 380, 0, 3)
-barTrack.Position = UDim2.new(0.5, -190, 0.7, 0)
-barTrack.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
-barTrack.BorderSizePixel = 0
-makeCorner(barTrack, 3)
-
-local barFill = Instance.new("Frame", barTrack)
-barFill.Size = UDim2.new(0, 0, 1, 0)
-barFill.BackgroundColor3 = Color3.fromRGB(0, 240, 255)
-barFill.BorderSizePixel = 0
-makeCorner(barFill, 3)
-
-local pctLabel = Instance.new("TextLabel", introRoot)
-pctLabel.Size = UDim2.new(1, 0, 0, 14)
-pctLabel.Position = UDim2.new(0, 0, 0.72, 4)
-pctLabel.BackgroundTransparency = 1
-pctLabel.Text = "0%"
-pctLabel.TextColor3 = Color3.fromRGB(140, 145, 170)
-pctLabel.Font = Enum.Font.GothamMedium
-pctLabel.TextSize = 11
-pctLabel.TextTransparency = 1
-
-local introLines = {
-    "Decrypting security handshakes...",
-    "Synchronizing virtual environmental variables...",
-    "Compiling premium runtime graphics...",
-    "Establishing encrypted tunnel...",
-    "Mounting YINETSU SPY core modules...",
-    "Ready.",
-}
-
-local function runIntro(onComplete)
-    tw(introLogo, 0.9, {TextTransparency = 0})
-    task.wait(0.25)
-    tw(introSub, 0.9, {TextTransparency = 0})
-    task.wait(0.3)
-    tw(introLog, 0.4, {TextTransparency = 0})
-    tw(pctLabel, 0.4, {TextTransparency = 0})
-
-    local pulseConn
-    pulseConn = RunService.RenderStepped:Connect(function()
-        if not introLogo.Parent then pulseConn:Disconnect() return end
-        local p = 0.5 + math.sin(tick() * 2.4) * 0.5
-        introLogo.TextColor3 = Color3.fromRGB(0, 240, 255):Lerp(Color3.fromRGB(255, 40, 200), p * 0.5)
-    end)
-
-    task.spawn(function()
-        for i, line in ipairs(introLines) do
-            if not introLog.Parent then break end
-            introLog.Text = "[ " .. i .. " / " .. #introLines .. " ]  " .. line
-            introLog.TextTransparency = 1
-            tw(introLog, 0.25, {TextTransparency = 0})
-            task.wait(0.45)
-            tw(introLog, 0.2, {TextTransparency = 0.4})
+local function addSysLog(msg, cat)
+    cat = cat or "INFO"
+    table.insert(logEntries, {Time=os.date("%H:%M:%S"), Category=cat, Message=tostring(msg)})
+    if #logEntries > 250 then table.remove(logEntries, 1) end
+    if LogView then
+        local lines = {}
+        for _, item in ipairs(logEntries) do
+            table.insert(lines, string.format("[%s] [%s] %s", item.Time, item.Category, item.Message))
         end
-    end)
-
-    local barTween = TweenService:Create(barFill,
-        TweenInfo.new(3.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-        {Size = UDim2.new(1, 0, 1, 0)})
-    barTween:Play()
-
-    local pctConn
-    pctConn = RunService.RenderStepped:Connect(function()
-        if not pctLabel.Parent then pctConn:Disconnect() return end
-        local p = math.floor(barFill.AbsoluteSize.X / math.max(barTrack.AbsoluteSize.X, 1) * 100)
-        pctLabel.Text = math.clamp(p, 0, 100) .. "%"
-    end)
-
-    barTween.Completed:Connect(function()
-        if pulseConn then pulseConn:Disconnect() end
-        if pctConn then pctConn:Disconnect() end
-        task.wait(0.3)
-        tw(introLogo, 0.5, {TextTransparency = 1})
-        tw(introSub, 0.5, {TextTransparency = 1})
-        tw(introLog, 0.5, {TextTransparency = 1})
-        tw(pctLabel, 0.5, {TextTransparency = 1})
-        tw(introRoot, 0.7, {BackgroundTransparency = 1})
-        task.wait(0.75)
-        IntroGui:Destroy()
-        if onComplete then onComplete() end
-    end)
+        LogView.Text = table.concat(lines, "\n")
+    end
 end
 
--- ============================================================
--- FLOAT BUTTONS
--- ============================================================
-local FloatUI = Instance.new("ScreenGui")
-FloatUI.Name = "YinetsuFloat"
-FloatUI.ResetOnSpawn = false
-FloatUI.DisplayOrder = 60
-FloatUI.Parent = CoreGui
+--==============================================================
+-- COLOR UTILITIES (for theme editor)
+--==============================================================
+local function colorToHex(c)
+    return string.format("#%02X%02X%02X",
+        math.floor(c.R*255+0.5), math.floor(c.G*255+0.5), math.floor(c.B*255+0.5))
+end
 
-local ToggleBtn = Instance.new("TextButton", FloatUI)
-ToggleBtn.Size = UDim2.new(0, 52, 0, 52)
-ToggleBtn.Position = UDim2.new(0, 20, 0.5, -26)
-ToggleBtn.BackgroundColor3 = CurrentTheme.Panel
-ToggleBtn.Text = "Y"
-ToggleBtn.TextColor3 = CurrentTheme.Highlight
-ToggleBtn.Font = Enum.Font.GothamBlack
-ToggleBtn.TextSize = 20
-ToggleBtn.AutoButtonColor = false
-ToggleBtn.BorderSizePixel = 0
-ToggleBtn.Draggable = true
-makeCorner(ToggleBtn, 26)
-local toggleStroke = makeGradientStroke(ToggleBtn, CurrentTheme.Border, CurrentTheme.Highlight, 2, 45)
-registerThemed(ToggleBtn, "BackgroundColor3", "Panel")
-registerThemed(ToggleBtn, "TextColor3", "Highlight")
+local function hexToColor(h)
+    h = h:gsub("#","")
+    if #h ~= 6 then return nil end
+    local r = tonumber(h:sub(1,2),16)
+    local g = tonumber(h:sub(3,4),16)
+    local b = tonumber(h:sub(5,6),16)
+    if not r or not g or not b then return nil end
+    return Color3.fromRGB(r,g,b)
+end
 
-local ToggleEdBtn = Instance.new("TextButton", FloatUI)
-ToggleEdBtn.Size = UDim2.new(0, 52, 0, 52)
-ToggleEdBtn.Position = UDim2.new(0, 82, 0.5, -26)
-ToggleEdBtn.BackgroundColor3 = CurrentTheme.PanelAlt
-ToggleEdBtn.Text = "E"
-ToggleEdBtn.TextColor3 = CurrentTheme.Accent
-ToggleEdBtn.Font = Enum.Font.GothamBlack
-ToggleEdBtn.TextSize = 20
-ToggleEdBtn.AutoButtonColor = false
-ToggleEdBtn.BorderSizePixel = 0
-ToggleEdBtn.Draggable = true
-ToggleEdBtn.Visible = false
-makeCorner(ToggleEdBtn, 26)
-local toggleEdStroke = makeGradientStroke(ToggleEdBtn, CurrentTheme.Accent, CurrentTheme.BorderAlt, 2, 45)
-registerThemed(ToggleEdBtn, "BackgroundColor3", "PanelAlt")
-registerThemed(ToggleEdBtn, "TextColor3", "Accent")
+--==============================================================
+-- FLOATING TOGGLE
+--==============================================================
+local FloatUI = create("ScreenGui", {Name="YinetsuFloat", ZIndexBehavior=Enum.ZIndexBehavior.Sibling}, CoreGui)
 
--- ============================================================
--- MAIN HUB GUI
--- ============================================================
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "YinetsuMain"
-ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-ScreenGui.ResetOnSpawn = false
-ScreenGui.DisplayOrder = 50
-ScreenGui.Parent = CoreGui
+local ToggleBtn = create("TextButton", {
+    Size = UDim2.new(0, 48, 0, 48),
+    Position = UDim2.new(0, 12, 0.5, 0),
+    BackgroundColor3 = currentTheme.Background,
+    Text = "Y", TextColor3 = currentTheme.Text,
+    Font = Enum.Font.GothamBold, TextSize = 18,
+}, FloatUI)
+reg(ToggleBtn, "bg", "Background")
+reg(ToggleBtn, "text", "Text")
+corner(ToggleBtn, 24)
+stroke(ToggleBtn, "Accent", 2, 0, true)
 
--- Drop Shadow (behind main)
-local mainShadow = Instance.new("Frame", ScreenGui)
-mainShadow.Size = UDim2.new(0, 760, 0, 480)
-mainShadow.AnchorPoint = Vector2.new(0.5, 0.5)
-mainShadow.Position = UDim2.new(0.5, 0, 0.5, 0)
-mainShadow.BackgroundColor3 = Color3.new(0, 0, 0)
-mainShadow.BackgroundTransparency = 0.6
-mainShadow.BorderSizePixel = 0
-mainShadow.ZIndex = 0
-mainShadow.Visible = false
-makeCorner(mainShadow, 18)
+local function makeDraggable(obj, handle)
+    local drag, start, startPos = false, nil, nil
+    track((handle or obj).InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            drag = true; start = input.Position; startPos = obj.Position
+        end
+    end))
+    track(UserInputService.InputChanged:Connect(function(input)
+        if drag and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            local d = input.Position - start
+            obj.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset+d.X, startPos.Y.Scale, startPos.Y.Offset+d.Y)
+        end
+    end))
+    track(UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            drag = false
+        end
+    end))
+end
+makeDraggable(ToggleBtn)
 
-local Main = Instance.new("Frame", ScreenGui)
-Main.Name = "Main"
-Main.Size = UDim2.new(0, 720, 0, 440)
-Main.AnchorPoint = Vector2.new(0.5, 0.5)
-Main.Position = UDim2.new(0.5, 0, 0.5, 0)
-Main.BackgroundColor3 = CurrentTheme.Background
-Main.BorderSizePixel = 0
-Main.ClipsDescendants = false
-Main.Active = true
-Main.Draggable = true
-Main.Visible = false
-Main.ZIndex = 1
-makeCorner(Main, 16)
-local mainStroke = makeGradientStroke(Main, CurrentTheme.Border, CurrentTheme.Highlight, 1.6, 60)
-registerThemed(Main, "BackgroundColor3", "Background")
+--==============================================================
+-- LOADING SCREEN
+--==============================================================
+local ScreenGui = create("ScreenGui", {
+    Name = "YinetsuMain", ResetOnSpawn = false, IgnoreGuiInset = true,
+    ZIndexBehavior = Enum.ZIndexBehavior.Sibling, DisplayOrder = 100,
+}, CoreGui)
 
--- SIDEBAR
-local Sidebar = Instance.new("Frame", Main)
-Sidebar.Size = UDim2.new(0, 180, 1, 0)
-Sidebar.BackgroundColor3 = CurrentTheme.Panel
-Sidebar.BorderSizePixel = 0
-Sidebar.ZIndex = 2
-makeCorner(Sidebar, 16)
-registerThemed(Sidebar, "BackgroundColor3", "Panel")
+local LoadingFrame = create("Frame", {
+    Name="LoadingScreen", Size=UDim2.fromScale(1,1),
+    BackgroundColor3 = currentTheme.Background, BorderSizePixel=0, ZIndex=100,
+}, ScreenGui)
+reg(LoadingFrame, "bg", "Background")
 
-local sidebarPad = makePadding(Sidebar, 14)
+local LoadingCard = create("Frame", {
+    Size = UDim2.new(0, 420, 0, 260), Position = UDim2.fromScale(0.5, 0.5),
+    AnchorPoint = Vector2.new(0.5, 0.5),
+    BackgroundColor3 = currentTheme.Surface, BorderSizePixel = 0, ZIndex = 101,
+}, LoadingFrame)
+reg(LoadingCard, "bg", "Surface")
+corner(LoadingCard, 18); stroke(LoadingCard, "Accent", 1.5, 0.05, true)
 
-local Brand = Instance.new("TextLabel", Sidebar)
-Brand.Size = UDim2.new(1, 0, 0, 30)
-Brand.Position = UDim2.new(0, 0, 0, 0)
-Brand.BackgroundTransparency = 1
-Brand.Text = "YINETSU SPY"
-Brand.TextColor3 = CurrentTheme.Highlight
-Brand.Font = Enum.Font.GothamBlack
-Brand.TextSize = 17
-Brand.TextXAlignment = Enum.TextXAlignment.Left
-registerThemed(Brand, "TextColor3", "Highlight")
+create("TextLabel", {
+    BackgroundTransparency=1, Position=UDim2.new(0,22,0,20), Size=UDim2.new(1,-44,0,34),
+    Text="YINETSU", Font=Enum.Font.GothamBold, TextSize=26, TextColor3=currentTheme.Text,
+    TextXAlignment=Enum.TextXAlignment.Left, ZIndex=102,
+}, LoadingCard)
 
-local BrandSub = Instance.new("TextLabel", Sidebar)
-BrandSub.Size = UDim2.new(1, 0, 0, 14)
-BrandSub.Position = UDim2.new(0, 0, 0, 30)
-BrandSub.BackgroundTransparency = 1
-BrandSub.Text = "P R O   E D I T I O N"
-BrandSub.TextColor3 = CurrentTheme.TextDim
-BrandSub.Font = Enum.Font.GothamBold
-BrandSub.TextSize = 9
-BrandSub.TextXAlignment = Enum.TextXAlignment.Left
-registerThemed(BrandSub, "TextColor3", "TextDim")
+create("TextLabel", {
+    BackgroundTransparency=1, Position=UDim2.new(0,22,0,56), Size=UDim2.new(1,-44,0,25),
+    Text="Spy VIP · Initializing", Font=Enum.Font.Gotham, TextSize=12,
+    TextColor3=currentTheme.Muted, TextXAlignment=Enum.TextXAlignment.Left, ZIndex=102,
+}, LoadingCard)
 
--- VIP PROFILE
-local Profile = Instance.new("Frame", Sidebar)
-Profile.Size = UDim2.new(1, 0, 0, 62)
-Profile.Position = UDim2.new(0, 0, 0, 56)
-Profile.BackgroundColor3 = CurrentTheme.PanelAlt
-Profile.BorderSizePixel = 0
-Profile.ZIndex = 3
-makeCorner(Profile, 12)
-registerThemed(Profile, "BackgroundColor3", "PanelAlt")
-local profStroke = makeStroke(Profile, CurrentTheme.Border, 1, 0.5)
-registerThemed(profStroke, "Color", "Border")
+local AvatarImage = create("ImageLabel", {
+    Size = UDim2.fromOffset(64, 64), Position = UDim2.new(0, 26, 0, 100),
+    BackgroundColor3 = currentTheme.SurfaceAlt, Image = "", ZIndex = 102,
+    ScaleType = Enum.ScaleType.Crop,
+}, LoadingCard)
+reg(AvatarImage, "bg", "SurfaceAlt")
+corner(AvatarImage, 32)
 
-local AvatarFrame = Instance.new("Frame", Profile)
-AvatarFrame.Size = UDim2.new(0, 42, 0, 42)
-AvatarFrame.Position = UDim2.new(0, 10, 0.5, -21)
-AvatarFrame.BackgroundColor3 = CurrentTheme.Panel
-AvatarFrame.BorderSizePixel = 0
-makeCorner(AvatarFrame, 21)
-registerThemed(AvatarFrame, "BackgroundColor3", "Panel")
-local avStroke = makeStroke(AvatarFrame, CurrentTheme.Highlight, 1.4, 0)
-registerThemed(avStroke, "Color", "Highlight")
+local LoadNameLbl = create("TextLabel", {
+    BackgroundTransparency=1, Position=UDim2.new(0,102,0,104), Size=UDim2.new(1,-125,0,26),
+    Text=LocalPlayer.DisplayName, Font=Enum.Font.GothamSemibold, TextSize=16,
+    TextColor3=currentTheme.Text, TextXAlignment=Enum.TextXAlignment.Left, ZIndex=102,
+}, LoadingCard)
 
-local AvatarImg = Instance.new("ImageLabel", AvatarFrame)
-AvatarImg.Size = UDim2.new(1, -4, 1, -4)
-AvatarImg.Position = UDim2.new(0, 2, 0, 2)
-AvatarImg.BackgroundTransparency = 1
-AvatarImg.Image = "rbxassetid://0"
-makeCorner(AvatarImg, 19)
+local LoadUserLbl = create("TextLabel", {
+    BackgroundTransparency=1, Position=UDim2.new(0,102,0,130), Size=UDim2.new(1,-125,0,22),
+    Text="@"..LocalPlayer.Name, Font=Enum.Font.Gotham, TextSize=12,
+    TextColor3=currentTheme.Muted, TextXAlignment=Enum.TextXAlignment.Left, ZIndex=102,
+}, LoadingCard)
 
-local welcomeLbl = Instance.new("TextLabel", Profile)
-welcomeLbl.Size = UDim2.new(1, -64, 0, 14)
-welcomeLbl.Position = UDim2.new(0, 58, 0, 12)
-welcomeLbl.BackgroundTransparency = 1
-welcomeLbl.Text = "Welcome back, Premium"
-welcomeLbl.TextColor3 = CurrentTheme.TextDim
-welcomeLbl.Font = Enum.Font.GothamMedium
-welcomeLbl.TextSize = 9
-welcomeLbl.TextXAlignment = Enum.TextXAlignment.Left
-registerThemed(welcomeLbl, "TextColor3", "TextDim")
+local LoadingTrack = create("Frame", {
+    Position=UDim2.new(0,26,1,-52), Size=UDim2.new(1,-52,0,8),
+    BackgroundColor3=currentTheme.SurfaceAlt, BorderSizePixel=0, ZIndex=102,
+}, LoadingCard)
+reg(LoadingTrack, "bg", "SurfaceAlt")
+corner(LoadingTrack, 5)
 
-local nameLbl = Instance.new("TextLabel", Profile)
-nameLbl.Size = UDim2.new(1, -64, 0, 16)
-nameLbl.Position = UDim2.new(0, 58, 0, 26)
-nameLbl.BackgroundTransparency = 1
-nameLbl.Text = "User"
-nameLbl.TextColor3 = CurrentTheme.Highlight
-nameLbl.Font = Enum.Font.GothamBold
-nameLbl.TextSize = 12
-nameLbl.TextXAlignment = Enum.TextXAlignment.Left
-registerThemed(nameLbl, "TextColor3", "Highlight")
+local LoadingBar = create("Frame", {
+    Size=UDim2.new(0,0,1,0), BackgroundColor3=currentTheme.Accent,
+    BorderSizePixel=0, ZIndex=103,
+}, LoadingTrack)
+reg(LoadingBar, "bg", "Accent")
+corner(LoadingBar, 5)
 
+local LoadingPercent = create("TextLabel", {
+    BackgroundTransparency=1, Position=UDim2.new(0,26,1,-32), Size=UDim2.new(1,-52,0,22),
+    Text="Initializing... 0%", Font=Enum.Font.Gotham, TextSize=11,
+    TextColor3=currentTheme.Muted, TextXAlignment=Enum.TextXAlignment.Left, ZIndex=102,
+}, LoadingCard)
+
+-- Async avatar fetch
 task.spawn(function()
-    nameLbl.Text = LocalPlayer.DisplayName or LocalPlayer.Name
     local ok, img = pcall(function()
-        return Players:GetUserThumbnailAsync(LocalPlayer.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size100x100)
+        return Players:GetUserThumbnailAsync(LocalPlayer.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420)
     end)
-    if ok and img then AvatarImg.Image = img end
+    if ok and img and AvatarImage and AvatarImage.Parent then
+        AvatarImage.Image = img
+        -- also send to header avatar if it exists
+        if getgenv()._YinetsuSetHeaderAvatar then
+            getgenv()._YinetsuSetHeaderAvatar(img)
+        end
+    end
 end)
 
--- NAV
-local NavContainer = Instance.new("Frame", Sidebar)
-NavContainer.Size = UDim2.new(1, 0, 1, -240)
-NavContainer.Position = UDim2.new(0, 0, 0, 130)
-NavContainer.BackgroundTransparency = 1
-NavContainer.ZIndex = 3
+TweenService:Create(LoadingBar, TweenInfo.new(CONFIG.IntroDuration, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+    {Size = UDim2.new(1, 0, 1, 0)}):Play()
 
-local navLayout = Instance.new("UIListLayout", NavContainer)
-navLayout.Padding = UDim.new(0, 6)
+local loadingStart = os.clock()
+while os.clock() - loadingStart < CONFIG.IntroDuration do
+    local p = math.clamp((os.clock()-loadingStart)/CONFIG.IntroDuration, 0, 1)
+    LoadingPercent.Text = string.format("Initializing... %d%%", math.floor(p*100))
+    task.wait(0.04)
+end
+LoadingPercent.Text = "Ready · 100%"
 
-local function createNavBtn(text, order)
-    local b = Instance.new("TextButton", NavContainer)
-    b.Size = UDim2.new(1, 0, 0, 34)
-    b.BackgroundColor3 = CurrentTheme.PanelAlt
-    b.BackgroundTransparency = 1
-    b.Text = "  " .. text
-    b.TextColor3 = CurrentTheme.TextDim
-    b.Font = Enum.Font.GothamMedium
-    b.TextSize = 12
-    b.TextXAlignment = Enum.TextXAlignment.Left
-    b.AutoButtonColor = false
-    b.BorderSizePixel = 0
-    b.LayoutOrder = order
-    b.ZIndex = 4
-    makeCorner(b, 8)
+--==============================================================
+-- MAIN WINDOW
+--==============================================================
+local Main = create("Frame", {
+    Name = "Main",
+    Size = UDim2.new(0, CONFIG.MainWidth, 0, CONFIG.MainHeight),
+    Position = UDim2.fromScale(0.5, 0.5),
+    AnchorPoint = Vector2.new(0.5, 0.5),
+    BackgroundColor3 = currentTheme.Background,
+    BorderSizePixel = 0, Visible = false, ClipsDescendants = true,
+}, ScreenGui)
+reg(Main, "bg", "Background")
+corner(Main, 16); stroke(Main, "Accent", 1.4, 0.08, true)
+local MainScale = create("UIScale", {Scale = 0.88}, Main)
 
-    local ind = Instance.new("Frame", b)
-    ind.Size = UDim2.new(0, 3, 0.6, 0)
-    ind.Position = UDim2.new(0, 4, 0.2, 0)
-    ind.BackgroundColor3 = CurrentTheme.Accent
-    ind.BorderSizePixel = 0
-    ind.BackgroundTransparency = 1
-    ind.ZIndex = 5
-    makeCorner(ind, 2)
-    registerThemed(ind, "BackgroundColor3", "Accent")
+--==============================================================
+-- HEADER (fixed avatar + name)
+--==============================================================
+local Header = create("Frame", {
+    Name = "Header", Size = UDim2.new(1, 0, 0, 76),
+    BackgroundColor3 = currentTheme.Surface, BorderSizePixel = 0,
+}, Main)
+reg(Header, "bg", "Surface")
+padding(Header, 20, 20, 8, 8)
 
-    b.MouseEnter:Connect(function()
-        if b:GetAttribute("active") then return end
-        tw(b, 0.2, {BackgroundTransparency = 0.7, TextColor3 = CurrentTheme.Text})
-    end)
-    b.MouseLeave:Connect(function()
-        if b:GetAttribute("active") then return end
-        tw(b, 0.2, {BackgroundTransparency = 1, TextColor3 = CurrentTheme.TextDim})
-    end)
-    return b, ind
+local HeaderTitle = label(Header, "YINETSU  ·  SPY VIP",
+    UDim2.new(0.55, 0, 0, 26), UDim2.new(0, 0, 0, 6), 17, "Text")
+HeaderTitle.Font = Enum.Font.GothamBold
+
+label(Header, "Remote spy · editor · cheats · themes",
+    UDim2.new(0.55, 0, 0, 20), UDim2.new(0, 0, 0, 34), 11, "Muted")
+
+-- Player chip (avatar + name), anchored properly
+local PlayerChip = create("Frame", {
+    Size = UDim2.new(0, 220, 0, 48), Position = UDim2.new(1, -420, 0.5, 0),
+    AnchorPoint = Vector2.new(0, 0.5),
+    BackgroundColor3 = currentTheme.SurfaceAlt, BorderSizePixel = 0,
+}, Header)
+reg(PlayerChip, "bg", "SurfaceAlt")
+corner(PlayerChip, 24)
+
+local HeaderAvatar = create("ImageLabel", {
+    Size = UDim2.fromOffset(40, 40), Position = UDim2.new(0, 4, 0.5, 0),
+    AnchorPoint = Vector2.new(0, 0.5),
+    BackgroundColor3 = currentTheme.Surface, Image = "",
+    ScaleType = Enum.ScaleType.Crop,
+}, PlayerChip)
+reg(HeaderAvatar, "bg", "Surface")
+corner(HeaderAvatar, 20); stroke(HeaderAvatar, "Accent", 1.5, 0.3, false)
+
+local HeaderName = create("TextLabel", {
+    BackgroundTransparency = 1, Position = UDim2.new(0, 52, 0, 6), Size = UDim2.new(1, -58, 0, 20),
+    Text = LocalPlayer.DisplayName, Font = Enum.Font.GothamSemibold, TextSize = 13,
+    TextColor3 = currentTheme.Text, TextXAlignment = Enum.TextXAlignment.Left,
+}, PlayerChip)
+reg(HeaderName, "text", "Text")
+
+local HeaderUser = create("TextLabel", {
+    BackgroundTransparency = 1, Position = UDim2.new(0, 52, 0, 24), Size = UDim2.new(1, -58, 0, 18),
+    Text = "@"..LocalPlayer.Name, Font = Enum.Font.Gotham, TextSize = 11,
+    TextColor3 = currentTheme.Muted, TextXAlignment = Enum.TextXAlignment.Left,
+}, PlayerChip)
+reg(HeaderUser, "text", "Muted")
+
+-- Expose a global so the async avatar fetch above can find it
+getgenv()._YinetsuSetHeaderAvatar = function(img)
+    if HeaderAvatar and HeaderAvatar.Parent then HeaderAvatar.Image = img end
+    if AvatarImage and AvatarImage.Parent then AvatarImage.Image = img end
 end
 
-local btnDash,   indDash   = createNavBtn("Dashboard", 1)
-local btnLogs,   indLogs   = createNavBtn("Remote Logs", 2)
-local btnMod,    indMod    = createNavBtn("Modifier", 3)
-local btnTheme,  indTheme  = createNavBtn("Themes", 4)
-local btnEditor, indEditor = createNavBtn("Editor", 5)
-local btnCheat,  indCheat  = createNavBtn("Cheats", 6)
+local HeaderDivider = create("Frame", {
+    Position = UDim2.new(0, 0, 1, -1), Size = UDim2.new(1, 0, 0, 1),
+    BackgroundColor3 = currentTheme.Accent, BackgroundTransparency = 0.55, BorderSizePixel = 0,
+}, Header)
+reg(HeaderDivider, "bg", "Accent")
 
--- CONTENT AREA
-local Content = Instance.new("Frame", Main)
-Content.Size = UDim2.new(1, -196, 1, -24)
-Content.Position = UDim2.new(0, 188, 0, 12)
-Content.BackgroundTransparency = 1
-Content.ZIndex = 2
+makeDraggable(Main, Header)
 
--- Topbar
-local Topbar = Instance.new("Frame", Content)
-Topbar.Size = UDim2.new(1, 0, 0, 46)
-Topbar.BackgroundColor3 = CurrentTheme.Panel
-Topbar.BorderSizePixel = 0
-makeCorner(Topbar, 12)
-registerThemed(Topbar, "BackgroundColor3", "Panel")
-local topStroke = makeStroke(Topbar, CurrentTheme.Border, 1, 0.65)
-registerThemed(topStroke, "Color", "Border")
+--==============================================================
+-- PREMIUM BUTTON
+--==============================================================
+local function premiumBtn(parent, text, size, pos, callback)
+    local b = create("TextButton", {
+        Size = size, Position = pos,
+        BackgroundColor3 = currentTheme.SurfaceAlt,
+        BorderSizePixel = 0, AutoButtonColor = false,
+        Text = text, TextColor3 = currentTheme.Text,
+        Font = Enum.Font.GothamSemibold, TextSize = 12, TextWrapped = true,
+    }, parent)
+    reg(b, "bg", "SurfaceAlt")
+    reg(b, "text", "Text")
+    corner(b, 9)
+    local s = stroke(b, "Accent", 1, 0.35, true)
+    local baseSize = b.Size
 
-local PageTitle = Instance.new("TextLabel", Topbar)
-PageTitle.Size = UDim2.new(0, 300, 1, 0)
-PageTitle.Position = UDim2.new(0, 16, 0, 0)
-PageTitle.BackgroundTransparency = 1
-PageTitle.Text = "Dashboard"
-PageTitle.TextColor3 = CurrentTheme.Text
-PageTitle.Font = Enum.Font.GothamBold
-PageTitle.TextSize = 15
-PageTitle.TextXAlignment = Enum.TextXAlignment.Left
-registerThemed(PageTitle, "TextColor3", "Text")
-
-local statusDot = Instance.new("Frame", Topbar)
-statusDot.Size = UDim2.new(0, 8, 0, 8)
-statusDot.Position = UDim2.new(1, -140, 0.5, -4)
-statusDot.BackgroundColor3 = CurrentTheme.Success
-statusDot.BorderSizePixel = 0
-makeCorner(statusDot, 4)
-registerThemed(statusDot, "BackgroundColor3", "Success")
-
-local statusTxt = Instance.new("TextLabel", Topbar)
-statusTxt.Size = UDim2.new(0, 110, 1, 0)
-statusTxt.Position = UDim2.new(1, -126, 0, 0)
-statusTxt.BackgroundTransparency = 1
-statusTxt.Text = "ONLINE"
-statusTxt.TextColor3 = CurrentTheme.Success
-statusTxt.Font = Enum.Font.GothamBold
-statusTxt.TextSize = 10
-statusTxt.TextXAlignment = Enum.TextXAlignment.Left
-registerThemed(statusTxt, "TextColor3", "Success")
-
-local closeBtn = Instance.new("TextButton", Topbar)
-closeBtn.Size = UDim2.new(0, 26, 0, 26)
-closeBtn.Position = UDim2.new(1, -34, 0.5, -13)
-closeBtn.BackgroundColor3 = CurrentTheme.PanelAlt
-closeBtn.Text = "✕"
-closeBtn.TextColor3 = CurrentTheme.Text
-closeBtn.Font = Enum.Font.GothamBold
-closeBtn.TextSize = 13
-closeBtn.AutoButtonColor = false
-closeBtn.BorderSizePixel = 0
-makeCorner(closeBtn, 8)
-registerThemed(closeBtn, "BackgroundColor3", "PanelAlt")
-registerThemed(closeBtn, "TextColor3", "Text")
-makeButtonPremium(closeBtn, {color = CurrentTheme.PanelAlt, accent = CurrentTheme.Danger})
-
--- Page holder
-local PageHolder = Instance.new("Frame", Content)
-PageHolder.Size = UDim2.new(1, 0, 1, -58)
-PageHolder.Position = UDim2.new(0, 0, 0, 58)
-PageHolder.BackgroundTransparency = 1
-PageHolder.ClipsDescendants = true
-
--- ============================================================
--- PAGES
--- ============================================================
-local Pages = {}
-local ActivePage = nil
-
-local function registerPage(name, frame)
-    Pages[name] = frame
-    frame.Size = UDim2.new(1, 0, 1, 0)
-    frame.BackgroundTransparency = 1
-    frame.Visible = false
-end
-
-local navRefs = {}
-
-local function setNavActive(name)
-    for _, entry in ipairs(navRefs) do
-        local isActive = entry.name == name
-        entry.btn:SetAttribute("active", isActive)
-        if entry.ind then
-            tw(entry.ind, 0.25, {BackgroundTransparency = isActive and 0 or 1})
-        end
-        tw(entry.btn, 0.25, {
-            BackgroundTransparency = isActive and 0.75 or 1,
-            TextColor3 = isActive and CurrentTheme.Text or CurrentTheme.TextDim
-        })
+    local function tw(props, dur)
+        TweenService:Create(b, TweenInfo.new(dur or 0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), props):Play()
     end
-end
 
-local function showPage(name)
-    for n, f in pairs(Pages) do
-        if n == name then
-            f.Visible = true
-            PageTitle.Text = n
-            f.Position = UDim2.new(0, 12, 0, 0)
-            tw(f, 0.35, {Position = UDim2.new(0, 0, 0, 0)}, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-        else
-            f.Visible = false
+    track(b.MouseEnter:Connect(function()
+        if not b.Parent then return end
+        tw({BackgroundColor3 = currentTheme.Accent}, 0.14); s.Transparency = 0.05
+    end))
+    track(b.MouseLeave:Connect(function()
+        if not b.Parent then return end
+        tw({BackgroundColor3 = currentTheme.SurfaceAlt, Size = baseSize}, 0.14); s.Transparency = 0.35
+    end))
+    track(b.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            tw({Size = UDim2.new(baseSize.X.Scale, baseSize.X.Offset-3, baseSize.Y.Scale, baseSize.Y.Offset-2)}, 0.07)
         end
-    end
-    ActivePage = name
-    setNavActive(name)
-end
-
-table.insert(navRefs, {btn = btnDash,   ind = indDash,   name = "Dashboard"})
-table.insert(navRefs, {btn = btnLogs,   ind = indLogs,   name = "Remote Logs"})
-table.insert(navRefs, {btn = btnMod,    ind = indMod,    name = "Modifier"})
-table.insert(navRefs, {btn = btnTheme,  ind = indTheme,  name = "Themes"})
-table.insert(navRefs, {btn = btnEditor, ind = indEditor, name = "Editor"})
-table.insert(navRefs, {btn = btnCheat,  ind = indCheat,  name = "Cheats"})
-
-for _, entry in ipairs(navRefs) do
-    entry.btn.MouseButton1Click:Connect(function() showPage(entry.name) end)
-end
-
--- ============================================================
--- PAGE: DASHBOARD
--- ============================================================
-local PageDash = Instance.new("Frame", PageHolder)
-registerPage("Dashboard", PageDash)
-
-local dashGreet = Instance.new("Frame", PageDash)
-dashGreet.Size = UDim2.new(1, 0, 0, 90)
-dashGreet.BackgroundColor3 = CurrentTheme.Panel
-dashGreet.BorderSizePixel = 0
-makeCorner(dashGreet, 12)
-registerThemed(dashGreet, "BackgroundColor3", "Panel")
-local dgStroke = makeGradientStroke(dashGreet, CurrentTheme.Border, CurrentTheme.Highlight, 1.2, 45)
-registerThemed(dgStroke, "Color", "Border")
-
-local dgTitle = Instance.new("TextLabel", dashGreet)
-dgTitle.Size = UDim2.new(1, -28, 0, 26)
-dgTitle.Position = UDim2.new(0, 14, 0, 12)
-dgTitle.BackgroundTransparency = 1
-dgTitle.Text = "YINETSU SPY"
-dgTitle.TextColor3 = CurrentTheme.Highlight
-dgTitle.Font = Enum.Font.GothamBlack
-dgTitle.TextSize = 20
-dgTitle.TextXAlignment = Enum.TextXAlignment.Left
-registerThemed(dgTitle, "TextColor3", "Highlight")
-
-local dgDesc = Instance.new("TextLabel", dashGreet)
-dgDesc.Size = UDim2.new(1, -28, 0, 40)
-dgDesc.Position = UDim2.new(0, 14, 0, 42)
-dgDesc.BackgroundTransparency = 1
-dgDesc.Text = "Premium remote spy & editor. Navigate with the sidebar to access each module."
-dgDesc.TextColor3 = CurrentTheme.TextDim
-dgDesc.Font = Enum.Font.Gotham
-dgDesc.TextSize = 11
-dgDesc.TextWrapped = true
-dgDesc.TextXAlignment = Enum.TextXAlignment.Left
-dgDesc.TextYAlignment = Enum.TextYAlignment.Top
-registerThemed(dgDesc, "TextColor3", "TextDim")
-
-local StatRow = Instance.new("Frame", PageDash)
-StatRow.Size = UDim2.new(1, 0, 0, 80)
-StatRow.Position = UDim2.new(0, 0, 0, 100)
-StatRow.BackgroundTransparency = 1
-local statLayout = Instance.new("UIListLayout", StatRow)
-statLayout.FillDirection = Enum.FillDirection.Horizontal
-statLayout.Padding = UDim.new(0, 10)
-
-local function createStatCard(title, value)
-    local card = Instance.new("Frame", StatRow)
-    card.Size = UDim2.new(0, 165, 1, 0)
-    card.BackgroundColor3 = CurrentTheme.PanelAlt
-    card.BorderSizePixel = 0
-    makeCorner(card, 10)
-    registerThemed(card, "BackgroundColor3", "PanelAlt")
-    local s = makeStroke(card, CurrentTheme.Border, 1, 0.7)
-    registerThemed(s, "Color", "Border")
-    local t = Instance.new("TextLabel", card)
-    t.Size = UDim2.new(1, -16, 0, 14); t.Position = UDim2.new(0, 12, 0, 12)
-    t.BackgroundTransparency = 1; t.Text = title
-    t.TextColor3 = CurrentTheme.TextDim; t.Font = Enum.Font.GothamMedium; t.TextSize = 9
-    t.TextXAlignment = Enum.TextXAlignment.Left
-    registerThemed(t, "TextColor3", "TextDim")
-    local v = Instance.new("TextLabel", card)
-    v.Size = UDim2.new(1, -16, 0, 26); v.Position = UDim2.new(0, 12, 0, 34)
-    v.BackgroundTransparency = 1; v.Text = value
-    v.TextColor3 = CurrentTheme.Highlight; v.Font = Enum.Font.GothamBold; v.TextSize = 18
-    v.TextXAlignment = Enum.TextXAlignment.Left
-    registerThemed(v, "TextColor3", "Highlight")
-end
-createStatCard("SESSION", "ACTIVE")
-createStatCard("BUILD", "v3.0.1")
-createStatCard("STATUS", "PREMIUM")
-
-local QuickRow = Instance.new("Frame", PageDash)
-QuickRow.Size = UDim2.new(1, 0, 0, 34)
-QuickRow.Position = UDim2.new(0, 0, 0, 200)
-QuickRow.BackgroundTransparency = 1
-local quickLayout = Instance.new("UIListLayout", QuickRow)
-quickLayout.FillDirection = Enum.FillDirection.Horizontal
-quickLayout.Padding = UDim.new(0, 10)
-
-local function quickBtn(text, cb)
-    local b = Instance.new("TextButton", QuickRow)
-    b.Size = UDim2.new(0, 145, 1, 0)
-    b.BackgroundColor3 = CurrentTheme.PanelAlt
-    b.Text = text
-    b.TextColor3 = CurrentTheme.Text
-    b.Font = Enum.Font.GothamBold
-    b.TextSize = 10
-    b.AutoButtonColor = false
-    b.BorderSizePixel = 0
-    makeCorner(b, 10)
-    local s = makeStroke(b, CurrentTheme.Border, 1, 0.6)
-    registerThemed(b, "BackgroundColor3", "PanelAlt")
-    registerThemed(b, "TextColor3", "Text")
-    registerThemed(s, "Color", "Border")
-    makeButtonPremium(b, {color = CurrentTheme.PanelAlt})
-    b.MouseButton1Click:Connect(cb)
+    end))
+    track(b.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            tw({Size = baseSize}, 0.1)
+        end
+    end))
+    track(b.Activated:Connect(function()
+        if callback then
+            local ok, err = pcall(callback)
+            if not ok then addSysLog("Button error: "..tostring(err), "ERROR") end
+        end
+    end))
     return b
 end
 
-quickBtn("OPEN EDITOR", function() EditorMain.Visible = true end)
-quickBtn("CHEATS MENU", function() CheatFrame.Visible = not CheatFrame.Visible end)
-quickBtn("THEMES", function() showPage("Themes") end)
+-- Header buttons
+local ToggleBtnHeader = premiumBtn(Header, "Hide", UDim2.new(0, 58, 0, 34), UDim2.new(1, -58, 0.5, 0), function()
+    isMinimized = not isMinimized
+    Main.Visible = not isMinimized
+end)
+ToggleBtnHeader.AnchorPoint = Vector2.new(0, 0.5)
 
--- ============================================================
--- PAGE: REMOTE LOGS
--- ============================================================
-local PageLogs = Instance.new("Frame", PageHolder)
-registerPage("Remote Logs", PageLogs)
+local SettingsQuickBtn = premiumBtn(Header, "⚙ Settings", UDim2.new(0, 100, 0, 34), UDim2.new(1, -166, 0.5, 0), nil)
+SettingsQuickBtn.AnchorPoint = Vector2.new(0, 0.5)
 
-local SearchBar = Instance.new("TextBox", PageLogs)
-SearchBar.Size = UDim2.new(0.48, -5, 0, 32)
-SearchBar.Position = UDim2.new(0, 0, 0, 0)
-SearchBar.BackgroundColor3 = CurrentTheme.Panel
-SearchBar.BorderSizePixel = 0
-SearchBar.PlaceholderText = "🔍  Search remotes..."
-SearchBar.PlaceholderColor3 = CurrentTheme.TextDim
-SearchBar.Text = ""
-SearchBar.TextColor3 = CurrentTheme.Text
-SearchBar.Font = Enum.Font.Gotham
-SearchBar.TextSize = 11
-SearchBar.TextXAlignment = Enum.TextXAlignment.Left
-SearchBar.ClearTextOnFocus = false
-makeCorner(SearchBar, 10)
-makePadding(SearchBar, 10)
-local searchStroke = makeStroke(SearchBar, CurrentTheme.Border, 1, 0.6)
-registerThemed(SearchBar, "BackgroundColor3", "Panel")
-registerThemed(SearchBar, "TextColor3", "Text")
-registerThemed(searchStroke, "Color", "Border")
+--==============================================================
+-- NAVIGATION
+--==============================================================
+local Navigation = create("Frame", {
+    Position = UDim2.new(0, 14, 0, 88), Size = UDim2.new(0, 175, 1, -102),
+    BackgroundColor3 = currentTheme.Surface, BorderSizePixel = 0,
+}, Main)
+reg(Navigation, "bg", "Surface")
+corner(Navigation, 12); padding(Navigation, 9, 9, 12, 12)
+create("UIListLayout", {Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder}, Navigation)
 
-local ClearLogsBtn = Instance.new("TextButton", PageLogs)
-ClearLogsBtn.Size = UDim2.new(0.24, -6, 0, 32)
-ClearLogsBtn.Position = UDim2.new(0.5, 0, 0, 0)
-ClearLogsBtn.BackgroundColor3 = CurrentTheme.PanelAlt
-ClearLogsBtn.Text = "CLEAR LOGS"
-ClearLogsBtn.TextColor3 = CurrentTheme.Danger
-ClearLogsBtn.Font = Enum.Font.GothamBold
-ClearLogsBtn.TextSize = 10
-ClearLogsBtn.AutoButtonColor = false
-ClearLogsBtn.BorderSizePixel = 0
-makeCorner(ClearLogsBtn, 10)
-local clrStroke = makeStroke(ClearLogsBtn, CurrentTheme.Danger, 1, 0.5)
-registerThemed(ClearLogsBtn, "BackgroundColor3", "PanelAlt")
-registerThemed(ClearLogsBtn, "TextColor3", "Danger")
-registerThemed(clrStroke, "Color", "Danger")
-makeButtonPremium(ClearLogsBtn, {color = CurrentTheme.PanelAlt, accent = CurrentTheme.Danger})
+local Content = create("Frame", {
+    Position = UDim2.new(0, 201, 0, 88), Size = UDim2.new(1, -215, 1, -102),
+    BackgroundTransparency = 1, BorderSizePixel = 0,
+}, Main)
 
-local ScanBtn = Instance.new("TextButton", PageLogs)
-ScanBtn.Size = UDim2.new(0.24, -6, 0, 32)
-ScanBtn.Position = UDim2.new(0.76, 0, 0, 0)
-ScanBtn.BackgroundColor3 = CurrentTheme.PanelAlt
-ScanBtn.Text = "SCAN ALL"
-ScanBtn.TextColor3 = CurrentTheme.Highlight
-ScanBtn.Font = Enum.Font.GothamBold
-ScanBtn.TextSize = 10
-ScanBtn.AutoButtonColor = false
-ScanBtn.BorderSizePixel = 0
-makeCorner(ScanBtn, 10)
-local scnStroke = makeStroke(ScanBtn, CurrentTheme.Highlight, 1, 0.5)
-registerThemed(ScanBtn, "BackgroundColor3", "PanelAlt")
-registerThemed(ScanBtn, "TextColor3", "Highlight")
-registerThemed(scnStroke, "Color", "Highlight")
-makeButtonPremium(ScanBtn, {color = CurrentTheme.PanelAlt, accent = CurrentTheme.Highlight})
-
-local LogsScroll = Instance.new("ScrollingFrame", PageLogs)
-LogsScroll.Size = UDim2.new(0.48, -5, 1, -44)
-LogsScroll.Position = UDim2.new(0, 0, 0, 44)
-LogsScroll.BackgroundColor3 = CurrentTheme.Panel
-LogsScroll.BorderSizePixel = 0
-LogsScroll.ScrollBarThickness = 3
-LogsScroll.ScrollBarImageColor3 = CurrentTheme.Accent
-LogsScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
-LogsScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
-makeCorner(LogsScroll, 10)
-local logsStroke = makeStroke(LogsScroll, CurrentTheme.Border, 1, 0.7)
-registerThemed(LogsScroll, "BackgroundColor3", "Panel")
-registerThemed(logsStroke, "Color", "Border")
-makePadding(LogsScroll, 8)
-
-local LogsLayout = Instance.new("UIListLayout", LogsScroll)
-LogsLayout.Padding = UDim.new(0, 6)
-LogsLayout.SortOrder = Enum.SortOrder.LayoutOrder
-
-local CodeScroll = Instance.new("ScrollingFrame", PageLogs)
-CodeScroll.Size = UDim2.new(0.48, -5, 1, -44)
-CodeScroll.Position = UDim2.new(0.52, 0, 0, 44)
-CodeScroll.BackgroundColor3 = CurrentTheme.Panel
-CodeScroll.BorderSizePixel = 0
-CodeScroll.ScrollBarThickness = 3
-CodeScroll.ScrollBarImageColor3 = CurrentTheme.Accent
-CodeScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
-CodeScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
-makeCorner(CodeScroll, 10)
-local codeStroke = makeStroke(CodeScroll, CurrentTheme.Border, 1, 0.7)
-registerThemed(CodeScroll, "BackgroundColor3", "Panel")
-registerThemed(codeStroke, "Color", "Border")
-makePadding(CodeScroll, 10)
-
-local CodeView = Instance.new("TextBox", CodeScroll)
-CodeView.Size = UDim2.new(1, 0, 1, 0)
-CodeView.BackgroundTransparency = 1
-CodeView.Text = "-- Select a remote from the log panel"
-CodeView.TextColor3 = CurrentTheme.Highlight
-CodeView.Font = Enum.Font.Code
-CodeView.TextSize = 11
-CodeView.MultiLine = true
-CodeView.ClearTextOnFocus = false
-CodeView.TextXAlignment = Enum.TextXAlignment.Left
-CodeView.TextYAlignment = Enum.TextYAlignment.Top
-CodeView.TextWrapped = true
-CodeView.AutomaticSize = Enum.AutomaticSize.Y
-registerThemed(CodeView, "TextColor3", "Highlight")
-
--- ============================================================
--- LOGGING SYSTEM (original preserved)
--- ============================================================
-local function getNameColor(name)
-    if name:lower():match("ban") or name:lower():match("kick") or name:lower():match("detect") or name:lower():match("admin") then
-        return Color3.fromRGB(255, 50, 50)
-    end
-    local hash = 0
-    for i = 1, #name do hash = string.byte(name, i) + (hash * 31) end
-    return Color3.fromHSV((math.abs(hash) % 100) / 100, 0.65, 0.85)
+local Pages = {}
+local function createPage(name)
+    local pg = create("ScrollingFrame", {
+        Name = name, Size = UDim2.fromScale(1, 1),
+        BackgroundTransparency = 1, BorderSizePixel = 0,
+        ScrollBarThickness = 5, ScrollBarImageColor3 = currentTheme.Accent,
+        CanvasSize = UDim2.new(0, 0, 0, 0),
+        AutomaticCanvasSize = Enum.AutomaticSize.Y,
+        Visible = false,
+    }, Content)
+    padding(pg, 2, 8, 2, 12)
+    create("UIListLayout", {Padding = UDim.new(0, 10), SortOrder = Enum.SortOrder.LayoutOrder}, pg)
+    Pages[name] = pg
+    return pg
 end
 
-local function clearLogsFunc()
-    for _, v in pairs(LogsScroll:GetChildren()) do
-        if v:IsA("TextButton") then v:Destroy() end
+local function showPage(name)
+    for n, p in pairs(Pages) do p.Visible = (n == name) end
+    for _, child in ipairs(Navigation:GetChildren()) do
+        if child:IsA("TextButton") then
+            local sel = child:GetAttribute("PageName") == name
+            TweenService:Create(child, TweenInfo.new(0.18), {
+                BackgroundColor3 = sel and currentTheme.Accent or currentTheme.SurfaceAlt,
+            }):Play()
+        end
     end
-    remoteLogs = {}
-    logQueue = {}
-    layoutOrderNum = 999999999
 end
 
-local function updateLogHighlights()
-    for key, entry in pairs(remoteLogs) do
-        local isSelected = false
-        if multiMode then
-            for _, item in ipairs(multiList) do
-                if item.key == key then isSelected = true break end
+local function navBtn(text, pageName, order)
+    local b = premiumBtn(Navigation, text, UDim2.new(1, 0, 0, 40), UDim2.new(), function() showPage(pageName) end)
+    b.LayoutOrder = order
+    b:SetAttribute("PageName", pageName)
+    return b
+end
+
+--==============================================================
+-- PAGES
+--==============================================================
+local OverviewPage  = createPage("Overview")
+local SpyPage       = createPage("Spy")
+local EditorPage    = createPage("Editor")
+local CheatsPage    = createPage("Cheats")
+local UtilitiesPage = createPage("Utilities")
+local PerfPage      = createPage("Performance")
+local SettingsPage  = createPage("Settings")
+
+navBtn("Overview",     "Overview",     1)
+navBtn("Remote Spy",   "Spy",          2)
+navBtn("Editor",       "Editor",       3)
+navBtn("Cheats",       "Cheats",       4)
+navBtn("Utilities",    "Utilities",    5)
+navBtn("Performance",  "Performance",  6)
+navBtn("Settings",     "Settings",     7)
+
+--==============================================================
+-- OVERVIEW PAGE
+--==============================================================
+local wp = panel(OverviewPage, "Welcome", UDim2.new(1, -6, 0, 128), UDim2.new())
+padding(wp, 16, 16, 12, 12)
+local wt = label(wp, "Welcome back, "..LocalPlayer.DisplayName, UDim2.new(1, 0, 0, 30), UDim2.new(), 19, "Text")
+wt.Font = Enum.Font.GothamBold
+label(wp, "Remote spy · editor · cheats · performance monitor",
+    UDim2.new(1, 0, 0, 24), UDim2.new(0, 0, 0, 38), 12, "Muted")
+label(wp, "Place ID: "..tostring(game.PlaceId).."  ·  Game ID: "..tostring(game.GameId),
+    UDim2.new(1, 0, 0, 20), UDim2.new(0, 0, 0, 70), 11, "AccentAlt")
+label(wp, "Player: "..LocalPlayer.Name.."  ·  Account: "..LocalPlayer.UserId,
+    UDim2.new(1, 0, 0, 20), UDim2.new(0, 0, 0, 94), 11, "Muted")
+
+local sp = panel(OverviewPage, "Status", UDim2.new(1, -6, 0, 112), UDim2.new())
+padding(sp, 16, 16, 12, 12)
+label(sp, "SESSION STATUS", UDim2.new(1, 0, 0, 23), UDim2.new(), 12, "AccentAlt")
+label(sp, "Hook active · Monitoring remotes", UDim2.new(1, 0, 0, 25), UDim2.new(0, 0, 0, 32), 14, "Success")
+local SessionClock = label(sp, "Session: 00:00:00", UDim2.new(1, 0, 0, 20), UDim2.new(0, 0, 0, 64), 11, "Muted")
+
+local fp = panel(OverviewPage, "FPS", UDim2.new(1, -6, 0, 90), UDim2.new())
+padding(fp, 16, 16, 10, 10)
+label(fp, "CURRENT FPS", UDim2.new(0.5, 0, 0, 20), UDim2.new(), 11, "Muted")
+local HomeFPSValue = label(fp, "--", UDim2.new(0.5, 0, 0, 32), UDim2.new(0, 0, 0, 24), 24, "Text")
+HomeFPSValue.Font = Enum.Font.GothamBold
+label(fp, "Client rendering rate", UDim2.new(0.5, 0, 0, 22), UDim2.new(0.5, 0, 0.5, -10), 11, "Muted")
+
+--==============================================================
+-- SPY PAGE
+--==============================================================
+local SpyPanel = create("Frame", {
+    Size = UDim2.new(1, -6, 1, -10), BackgroundTransparency = 1,
+}, SpyPage)
+
+-- Search Bar
+local SearchBar = create("TextBox", {
+    Size = UDim2.new(0.5, -5, 0, 38), Position = UDim2.new(0, 0, 0, 0),
+    BackgroundColor3 = currentTheme.SurfaceAlt, BorderSizePixel = 0,
+    PlaceholderText = "🔍 Search remote name...", PlaceholderColor3 = currentTheme.Muted,
+    Text = "", TextColor3 = currentTheme.Text, ClearTextOnFocus = false,
+    Font = Enum.Font.Gotham, TextSize = 12, TextXAlignment = Enum.TextXAlignment.Left,
+}, SpyPanel)
+reg(SearchBar, "bg", "SurfaceAlt"); reg(SearchBar, "text", "Text"); reg(SearchBar, "placeholder", "Muted")
+corner(SearchBar, 8); padding(SearchBar, 12, 10, 0, 0)
+
+-- Quick action buttons
+local quickRow = create("Frame", {
+    Size = UDim2.new(0.5, -5, 0, 38), Position = UDim2.new(0.5, 5, 0, 0),
+    BackgroundTransparency = 1,
+}, SpyPanel)
+create("UIListLayout", {
+    Padding = UDim.new(0, 6),
+    FillDirection = Enum.FillDirection.Horizontal,
+    SortOrder = Enum.SortOrder.LayoutOrder,
+}, quickRow)
+
+local btnScanAll   = premiumBtn(quickRow, "Scan All",   UDim2.new(0, 90, 0, 38), UDim2.new(), nil)
+local btnClearLogs = premiumBtn(quickRow, "Clear",      UDim2.new(0, 76, 0, 38), UDim2.new(), nil)
+local btnSniper    = premiumBtn(quickRow, "Sniper",     UDim2.new(0, 76, 0, 38), UDim2.new(), nil)
+local btnCopyAll   = premiumBtn(quickRow, "Copy All",   UDim2.new(0, 90, 0, 38), UDim2.new(), nil)
+btnScanAll.LayoutOrder=1; btnClearLogs.LayoutOrder=2; btnSniper.LayoutOrder=3; btnCopyAll.LayoutOrder=4
+
+-- Remote list (left) + code view (right)
+local RemoteLogScroll = create("ScrollingFrame", {
+    Size = UDim2.new(0.42, -4, 1, -160), Position = UDim2.new(0, 0, 0, 46),
+    BackgroundColor3 = currentTheme.Surface, BorderSizePixel = 0,
+    ScrollBarThickness = 4, ScrollBarImageColor3 = currentTheme.Accent,
+    CanvasSize = UDim2.new(0, 0, 0, 0),
+    AutomaticCanvasSize = Enum.AutomaticSize.Y,
+}, SpyPanel)
+reg(RemoteLogScroll, "bg", "Surface")
+corner(RemoteLogScroll, 10); stroke(RemoteLogScroll, "Accent", 1, 0.5, true)
+padding(RemoteLogScroll, 6, 6, 6, 6)
+create("UIListLayout", {Padding = UDim.new(0, 5), SortOrder = Enum.SortOrder.LayoutOrder}, RemoteLogScroll)
+
+local CodeContainer = create("Frame", {
+    Size = UDim2.new(0.58, -4, 0.58, 0), Position = UDim2.new(0.42, 4, 0, 46),
+    BackgroundColor3 = currentTheme.Background, BorderSizePixel = 0,
+}, SpyPanel)
+reg(CodeContainer, "bg", "Background")
+corner(CodeContainer, 10); stroke(CodeContainer, "AccentAlt", 1, 0.5, true)
+
+local CodeScroll = create("ScrollingFrame", {
+    Size = UDim2.new(1, -12, 1, -12), Position = UDim2.new(0, 6, 0, 6),
+    BackgroundTransparency = 1, ScrollBarThickness = 3,
+    CanvasSize = UDim2.new(0, 0, 0, 0),
+    AutomaticCanvasSize = Enum.AutomaticSize.XY,
+}, CodeContainer)
+
+local CodeView = create("TextBox", {
+    Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1,
+    Text = "-- Select a remote to view its args.",
+    TextColor3 = currentTheme.AccentAlt,
+    Font = Enum.Font.Code, TextSize = 11, MultiLine = true,
+    ClearTextOnFocus = false,
+    TextXAlignment = Enum.TextXAlignment.Left,
+    TextYAlignment = Enum.TextYAlignment.Top,
+    TextEditable = false, AutomaticSize = Enum.AutomaticSize.XY,
+}, CodeScroll)
+reg(CodeView, "text", "AccentAlt")
+
+-- ==== SPAM CONTROLS (editable) ====
+local SpamRow = create("Frame", {
+    Size = UDim2.new(0.58, -4, 0, 40), Position = UDim2.new(0.42, 4, 0.58, 50),
+    BackgroundColor3 = currentTheme.Surface, BorderSizePixel = 0,
+}, SpyPanel)
+reg(SpamRow, "bg", "Surface")
+corner(SpamRow, 10); stroke(SpamRow, "Accent", 1, 0.5, true)
+padding(SpamRow, 8, 8, 6, 6)
+
+local SpamCountLabel = label(SpamRow, "Count:", UDim2.new(0, 48, 1, 0), UDim2.new(0, 0, 0, 0), 11, "Muted")
+local SpamCountBox = create("TextBox", {
+    Size = UDim2.new(0, 60, 1, -4), Position = UDim2.new(0, 50, 0, 2),
+    BackgroundColor3 = currentTheme.SurfaceAlt, BorderSizePixel = 0,
+    Text = "50", TextColor3 = currentTheme.Text,
+    Font = Enum.Font.Gotham, TextSize = 12, ClearTextOnFocus = false,
+}, SpamRow)
+reg(SpamCountBox, "bg", "SurfaceAlt"); reg(SpamCountBox, "text", "Text")
+corner(SpamCountBox, 6)
+
+local SpamIntervalLabel = label(SpamRow, "Wait:", UDim2.new(0, 42, 1, 0), UDim2.new(0, 120, 0, 0), 11, "Muted")
+local SpamIntervalBox = create("TextBox", {
+    Size = UDim2.new(0, 60, 1, -4), Position = UDim2.new(0, 162, 0, 2),
+    BackgroundColor3 = currentTheme.SurfaceAlt, BorderSizePixel = 0,
+    Text = "0", TextColor3 = currentTheme.Text,
+    Font = Enum.Font.Gotham, TextSize = 12, ClearTextOnFocus = false,
+}, SpamRow)
+reg(SpamIntervalBox, "bg", "SurfaceAlt"); reg(SpamIntervalBox, "text", "Text")
+corner(SpamIntervalBox, 6)
+
+local SpamInfoLbl = label(SpamRow, "(seconds · 0 = same-time parallel)", UDim2.new(1, -230, 1, 0), UDim2.new(0, 226, 0, 0), 10, "Muted")
+
+-- Action buttons under code
+local runRow = create("Frame", {
+    Size = UDim2.new(0.58, -4, 0, 38), Position = UDim2.new(0.42, 4, 0.58, 96),
+    BackgroundTransparency = 1,
+}, SpyPanel)
+create("UIListLayout", {Padding = UDim.new(0, 5), FillDirection = Enum.FillDirection.Horizontal}, runRow)
+
+-- Helper: fire a remote with args
+local function fireRemote(remote, args)
+    if not remote or not remote.Parent then return end
+    pcall(function()
+        if remote.ClassName == "RemoteEvent" then
+            remote:FireServer(unpack(args))
+        else
+            remote:InvokeServer(unpack(args))
+        end
+    end)
+end
+
+-- Helper: parallel spam (all fire ~same time)
+local function doSpam(remote, args, count, interval)
+    if not remote or not remote.Parent then return end
+    count = math.max(1, math.floor(count or 50))
+    interval = math.max(0, tonumber(interval) or 0)
+    if interval <= 0 then
+        -- Fire ALL at the same time using parallel task.spawn
+        for i = 1, count do
+            task.spawn(function() fireRemote(remote, args) end)
+        end
+    else
+        -- Sequential with wait (converted to ms delay through task.wait)
+        task.spawn(function()
+            for i = 1, count do
+                fireRemote(remote, args)
+                if interval > 0 then task.wait(interval) end
+            end
+        end)
+    end
+end
+
+premiumBtn(runRow, "Run", UDim2.new(0, 62, 0, 38), UDim2.new(), function()
+    if multiMode then
+        for _, d in pairs(multiList) do
+            task.spawn(function() fireRemote(d.remote, d.args) end)
+        end
+    else
+        fireRemote(selectedRemote, selectedArgs)
+    end
+end).LayoutOrder = 1
+
+premiumBtn(runRow, "Spam", UDim2.new(0, 62, 0, 38), UDim2.new(), function()
+    local count = tonumber(SpamCountBox.Text) or 50
+    local interval = tonumber(SpamIntervalBox.Text) or 0
+    if selectedRemote and selectedRemote.Parent then
+        doSpam(selectedRemote, selectedArgs, count, interval)
+        addSysLog(string.format("Spam fired: %dx, wait=%s", count, tostring(interval)), "SPY")
+    else
+        addSysLog("No remote selected for spam.", "WARN")
+    end
+end).LayoutOrder = 2
+
+premiumBtn(runRow, "Copy", UDim2.new(0, 62, 0, 38), UDim2.new(), function()
+    setclipboard(CodeView.Text)
+    addSysLog("Code copied to clipboard.", "SPY")
+end).LayoutOrder = 3
+
+premiumBtn(runRow, "Multi", UDim2.new(0, 62, 0, 38), UDim2.new(), function()
+    multiMode = not multiMode
+    if not multiMode then multiList = {}; CodeView.Text = "" end
+end).LayoutOrder = 4
+
+premiumBtn(runRow, "Save", UDim2.new(0, 62, 0, 38), UDim2.new(), function()
+    if selectedRemote then
+        local name = selectedRemote.Name:gsub("[^%w_%-]", "_")
+        pcall(function()
+            writefile(gPath.."/"..name.."_"..os.time()..".json",
+                HttpService:JSONEncode({{name=selectedRemote.Name, args=selectedArgs}}))
+            addSysLog("Saved: "..name..".json", "FILE")
+        end)
+    end
+end).LayoutOrder = 5
+
+-- Modifier row (bottom)
+local ModFrame = create("Frame", {
+    Size = UDim2.new(1, -6, 0, 48), Position = UDim2.new(0, 0, 1, -54),
+    BackgroundColor3 = currentTheme.Surface, BorderSizePixel = 0,
+}, SpyPanel)
+reg(ModFrame, "bg", "Surface")
+corner(ModFrame, 10); stroke(ModFrame, "Accent", 1, 0.5, true)
+padding(ModFrame, 8, 8, 6, 6)
+
+local modTargetBox = create("TextBox", {
+    Size = UDim2.new(0.22, 0, 1, -6), Position = UDim2.new(0, 0, 0, 3),
+    BackgroundColor3 = currentTheme.SurfaceAlt, BorderSizePixel = 0,
+    PlaceholderText = "Find", Text = "", TextColor3 = currentTheme.Text,
+    Font = Enum.Font.Gotham, TextSize = 11, ClearTextOnFocus = false,
+}, ModFrame)
+reg(modTargetBox, "bg", "SurfaceAlt"); reg(modTargetBox, "text", "Text")
+corner(modTargetBox, 6)
+
+local modReplaceBox = create("TextBox", {
+    Size = UDim2.new(0.22, 0, 1, -6), Position = UDim2.new(0.23, 0, 0, 3),
+    BackgroundColor3 = currentTheme.SurfaceAlt, BorderSizePixel = 0,
+    PlaceholderText = "Set", Text = "", TextColor3 = currentTheme.Text,
+    Font = Enum.Font.Gotham, TextSize = 11, ClearTextOnFocus = false,
+}, ModFrame)
+reg(modReplaceBox, "bg", "SurfaceAlt"); reg(modReplaceBox, "text", "Text")
+corner(modReplaceBox, 6)
+
+local bModToggle = premiumBtn(ModFrame, "MOD: OFF", UDim2.new(0, 95, 1, -6), UDim2.new(0.46, 0, 0, 3), nil)
+local bNegate    = premiumBtn(ModFrame, "NEG: OFF", UDim2.new(0, 85, 1, -6), UDim2.new(0.585, 0, 0, 3), nil)
+local bMultiply  = premiumBtn(ModFrame, "x9999",    UDim2.new(0, 75, 1, -6), UDim2.new(0.70, 0, 0, 3), nil)
+local bCheatMenu = premiumBtn(ModFrame, "CHEATS",   UDim2.new(0, 90, 1, -6), UDim2.new(0.81, 0, 0, 3), nil)
+
+modTargetBox:GetPropertyChangedSignal("Text"):Connect(function() cachedModTarget = modTargetBox.Text end)
+modReplaceBox:GetPropertyChangedSignal("Text"):Connect(function() cachedModReplace = modReplaceBox.Text end)
+
+bModToggle.Activated:Connect(function()
+    modifierActive = not modifierActive
+    bModToggle.Text = modifierActive and "MOD: ON" or "MOD: OFF"
+end)
+bNegate.Activated:Connect(function()
+    negateActive = not negateActive
+    bNegate.Text = negateActive and "NEG: ON" or "NEG: OFF"
+end)
+bMultiply.Activated:Connect(function()
+    multActive = not multActive
+    bMultiply.Text = multActive and "x9999: ON" or "x9999"
+end)
+bCheatMenu.Activated:Connect(function() showPage("Cheats") end)
+
+--==============================================================
+-- EDITOR PAGE
+--==============================================================
+local editorPages = {}
+local currentPage = 1
+local function initPage(p)
+    if not editorPages[p] then
+        editorPages[p] = {text = "{}", looping = false, speed = 0.1}
+    end
+end
+initPage(1)
+
+local EdPanel = panel(EditorPage, "EdPanel", UDim2.new(1, -6, 0, 68), UDim2.new())
+padding(EdPanel, 14, 14, 10, 10)
+label(EdPanel, "YINETSU EDITOR", UDim2.new(1, 0, 0, 22), UDim2.new(), 13, "AccentAlt")
+local lblPage = label(EdPanel, "Page: 1  ·  Loop: OFF", UDim2.new(1, 0, 0, 20), UDim2.new(0, 0, 0, 28), 11, "Muted")
+
+local EdBox = create("TextBox", {
+    Size = UDim2.new(1, -6, 0, 260),
+    BackgroundColor3 = currentTheme.Background, BorderSizePixel = 0,
+    Text = "{}", TextColor3 = currentTheme.Success,
+    Font = Enum.Font.Code, TextSize = 11, MultiLine = true, ClearTextOnFocus = false,
+    TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Top,
+}, EditorPage)
+reg(EdBox, "bg", "Background"); reg(EdBox, "text", "Success")
+corner(EdBox, 10); stroke(EdBox, "AccentAlt", 1, 0.5, true)
+padding(EdBox, 12, 12, 12, 12)
+
+local EdBtnRow = create("Frame", {Size = UDim2.new(1, -6, 0, 38), BackgroundTransparency = 1}, EditorPage)
+create("UIListLayout", {Padding = UDim.new(0, 6), FillDirection = Enum.FillDirection.Horizontal}, EdBtnRow)
+
+local function edBtn(txt, w, cb)
+    return premiumBtn(EdBtnRow, txt, UDim2.new(0, w or 90, 0, 38), UDim2.new(), cb)
+end
+
+local edSpeedBox = create("TextBox", {
+    Size = UDim2.new(0, 64, 0, 38), BackgroundColor3 = currentTheme.SurfaceAlt,
+    BorderSizePixel = 0, Text = "0.1", TextColor3 = currentTheme.Text,
+    Font = Enum.Font.Gotham, TextSize = 11, ClearTextOnFocus = false,
+}, EdBtnRow)
+reg(edSpeedBox, "bg", "SurfaceAlt"); reg(edSpeedBox, "text", "Text")
+corner(edSpeedBox, 8)
+
+local function updatePageUI()
+    lblPage.Text = string.format("Page: %d  ·  Loop: %s  ·  Interval: %ss",
+        currentPage, editorPages[currentPage].looping and "ON" or "OFF", tostring(editorPages[currentPage].speed))
+    EdBox.Text = editorPages[currentPage].text
+    edSpeedBox.Text = tostring(editorPages[currentPage].speed)
+end
+
+EdBox:GetPropertyChangedSignal("Text"):Connect(function()
+    if editorPages[currentPage] then editorPages[currentPage].text = EdBox.Text end
+end)
+edSpeedBox:GetPropertyChangedSignal("Text"):Connect(function()
+    if editorPages[currentPage] then editorPages[currentPage].speed = tonumber(edSpeedBox.Text) or 0.1 end
+end)
+
+local function fireEdCode(codeText)
+    if not selectedRemote or not selectedRemote.Parent then
+        addSysLog("No remote selected for editor.", "WARN")
+        return
+    end
+    local s, res = pcall(function() return loadstring("return "..codeText)() end)
+    if s and typeof(res) == "table" then
+        if selectedRemote.ClassName == "RemoteEvent" then
+            selectedRemote:FireServer(unpack(res))
+        else
+            local ret = {selectedRemote:InvokeServer(unpack(res))}
+            getgenv().LastReturn = ret
+            CodeView.Text = "-- [[ SERVER RETURN ]]\n"..yinetsuBeautify(ret)
+        end
+    end
+end
+
+edBtn("Run", 70, function() fireEdCode(EdBox.Text) end).LayoutOrder = 1
+edBtn("Beautify", 90, function()
+    local s, res = pcall(function() return loadstring("return "..EdBox.Text)() end)
+    if s and typeof(res) == "table" then EdBox.Text = yinetsuBeautify(res) end
+end).LayoutOrder = 2
+edBtn("Minify", 80, function()
+    local s, res = pcall(function() return loadstring("return "..EdBox.Text)() end)
+    if s and typeof(res) == "table" then EdBox.Text = v2s(res) end
+end).LayoutOrder = 3
+edBtn("Prev", 70, function()
+    if currentPage > 1 then currentPage = currentPage - 1; updatePageUI() end
+end).LayoutOrder = 4
+edBtn("Next", 70, function()
+    currentPage = currentPage + 1; initPage(currentPage); updatePageUI()
+end).LayoutOrder = 5
+edBtn("Loop", 80, function()
+    local pg = currentPage
+    editorPages[pg].looping = not editorPages[pg].looping
+    updatePageUI()
+    if editorPages[pg].looping then
+        task.spawn(function()
+            while editorPages[pg].looping and getgenv().YinetsuUIActive do
+                fireEdCode(editorPages[pg].text)
+                task.wait(editorPages[pg].speed)
+            end
+        end)
+    end
+end).LayoutOrder = 6
+
+local templates = {
+    {name = "WalkSpeed", code = "{[1]='Speed', [2]=100}"},
+    {name = "Teleport",  code = "{[1]=CFrame.new(0,100,0)}"},
+    {name = "Kill",      code = "{[1]='Hit', [2]=workspace.Enemy}"},
+    {name = "GodMode",   code = "{[1]=true, [2]='GodMode'}"},
+    {name = "Reset",     code = "{}"},
+}
+local tIdx = 0
+edBtn("Template", 90, function()
+    tIdx = tIdx % #templates + 1
+    EdBox.Text = templates[tIdx].code
+    addSysLog("Template: "..templates[tIdx].name, "EDITOR")
+end).LayoutOrder = 7
+
+updatePageUI()
+
+--==============================================================
+-- CHEATS PAGE
+--==============================================================
+local Cp = panel(CheatsPage, "CheatsPanel", UDim2.new(1, -6, 0, 210), UDim2.new())
+padding(Cp, 16, 16, 14, 14)
+label(Cp, "REMOTE CHEAT UTILITIES", UDim2.new(1, 0, 0, 24), UDim2.new(), 13, "AccentAlt")
+local descLbl = label(Cp, "Manipulate outgoing remote calls. Negate/multiply numeric args on the fly.",
+    UDim2.new(1, 0, 0, 36), UDim2.new(0, 0, 0, 28), 11, "Muted")
+descLbl.TextWrapped = true
+
+local function cbtn(txt, pos, cb)
+    return premiumBtn(Cp, txt, UDim2.new(0.31, 0, 0, 44), pos, cb)
+end
+
+cbtn("Negate Args",   UDim2.new(0, 0, 0, 76), function()
+    negateActive = not negateActive
+    addSysLog("Negate: "..tostring(negateActive), "CHEAT")
+end)
+cbtn("Multiply x9999", UDim2.new(0.345, 0, 0, 76), function()
+    multActive = not multActive
+    addSysLog("Multiply: "..tostring(multActive), "CHEAT")
+end)
+cbtn("Scan Rewards", UDim2.new(0.69, 0, 0, 76), function()
+    local found = 0
+    local targets = {"Reward","Claim","Cash","Money","Collect","Buy","Purchase"}
+    for _, v in pairs(ReplicatedStorage:GetDescendants()) do
+        if v:IsA("RemoteEvent") or v:IsA("RemoteFunction") then
+            for _, k in pairs(targets) do
+                if v.Name:match(k) then
+                    addLog(v, {"[SCAN FOUND]"}, true)
+                    found = found + 1
+                    break
+                end
             end
         end
-        if entry.button and entry.button.Parent then
-            entry.button.BackgroundColor3 = isSelected and Color3.fromRGB(0, 200, 100) or entry.origCol
+    end
+    addSysLog("Scanned "..found.." reward remotes.", "SCAN")
+end)
+
+cbtn("Run All Logs", UDim2.new(0, 0, 0, 130), function()
+    local logsToRun = {}
+    for _, entry in pairs(remoteLogs) do
+        if entry.remote and entry.remote.Parent then
+            table.insert(logsToRun, {remote=entry.remote, args=entry.args})
         end
     end
+    for i, item in ipairs(logsToRun) do
+        task.spawn(function() fireRemote(item.remote, item.args) end)
+        if i % 10 == 0 then task.wait() end
+    end
+    addSysLog("Ran "..#logsToRun.." logged remotes.", "CHEAT")
+end)
+cbtn("Record Seq", UDim2.new(0.345, 0, 0, 130), function()
+    recording = not recording
+    if recording then recordedSeq = {} end
+    addSysLog("Recording: "..tostring(recording), "CHEAT")
+end)
+cbtn("Make Script", UDim2.new(0.69, 0, 0, 130), function()
+    if #recordedSeq == 0 then addSysLog("Nothing recorded.", "WARN"); return end
+    local final = "-- [[ YINETSU GENERATED ]]\n"
+    final = final.."local VirtualUser = game:GetService('VirtualUser')\n"
+    final = final.."game:GetService('RunService').Stepped:Connect(function()\n"
+    final = final.."    VirtualUser:CaptureController()\n"
+    final = final.."    VirtualUser:ClickButton2(Vector2.new())\n"
+    final = final.."end)\n\n"
+    final = final.."while task.wait(0.1) do\n"
+    for _, item in ipairs(recordedSeq) do
+        local a = v2s(item.args)
+        local call = (item.remote.ClassName == "RemoteEvent" and "FireServer" or "InvokeServer")
+        final = final..string.format("    game:GetService('ReplicatedStorage').%s:%s(unpack(%s))\n", item.remote.Name, call, a)
+    end
+    final = final.."end"
+    setclipboard(final)
+    addSysLog("Script copied to clipboard.", "CHEAT")
+end)
+
+-- Anti-spam + blocklist panel
+local Ap = panel(CheatsPage, "AntiPanel", UDim2.new(1, -6, 0, 160), UDim2.new())
+padding(Ap, 16, 16, 14, 14)
+label(Ap, "GUARD / FILTERS", UDim2.new(1, 0, 0, 24), UDim2.new(), 13, "AccentAlt")
+local apDesc = label(Ap, "Block spammy remotes and blacklist dangerous names.",
+    UDim2.new(1, 0, 0, 36), UDim2.new(0, 0, 0, 28), 11, "Muted")
+apDesc.TextWrapped = true
+
+local ab1 = premiumBtn(Ap, "Block Spam",     UDim2.new(0.31, 0, 0, 42), UDim2.new(0, 0, 0, 76), nil)
+local ab2 = premiumBtn(Ap, "Reset Filters",  UDim2.new(0.31, 0, 0, 42), UDim2.new(0.345, 0, 0, 76), function()
+    blacklist = {}; blocklist = {}
+    addSysLog("Filters cleared.", "CHEAT")
+end)
+local ab3 = premiumBtn(Ap, "Clear Remotes",  UDim2.new(0.31, 0, 0, 42), UDim2.new(0.69, 0, 0, 76), nil)
+
+ab1.Activated:Connect(function()
+    getgenv()._spamBlockEnabled = not getgenv()._spamBlockEnabled
+    ab1.Text = getgenv()._spamBlockEnabled and "Anti-Spam: ON" or "Block Spam"
+    addSysLog("Anti-spam: "..tostring(getgenv()._spamBlockEnabled), "CHEAT")
+end)
+
+ab3.Activated:Connect(function()
+    for _, v in pairs(RemoteLogScroll:GetChildren()) do
+        if v:IsA("TextButton") then v:Destroy() end
+    end
+    remoteLogs = {}; logQueue = {}
+    layoutOrderNum = 999999999
+    addSysLog("Remote list cleared.", "CHEAT")
+end)
+
+--==============================================================
+-- UTILITIES PAGE
+--==============================================================
+local Up = panel(UtilitiesPage, "UtilPanel", UDim2.new(1, -6, 0, 200), UDim2.new())
+padding(Up, 16, 16, 14, 14)
+label(Up, "SERVER UTILITIES", UDim2.new(1, 0, 0, 24), UDim2.new(), 13, "AccentAlt")
+local upDesc = label(Up, "Rejoin or use standard public matchmaking.",
+    UDim2.new(1, 0, 0, 36), UDim2.new(0, 0, 0, 28), 11, "Muted")
+upDesc.TextWrapped = true
+
+local TeleportStatus = label(Up, "Ready", UDim2.new(1, 0, 0, 22), UDim2.new(0, 0, 0, 68), 11, "Success")
+
+premiumBtn(Up, "Rejoin Server", UDim2.new(0.31, 0, 0, 44), UDim2.new(0, 0, 0, 100), function()
+    if isTeleporting then return end
+    isTeleporting = true
+    TeleportStatus.Text = "Requesting rejoin..."
+    TeleportStatus.TextColor3 = currentTheme.Warning
+    local ok, err = pcall(function() TeleportService:Teleport(game.PlaceId, LocalPlayer) end)
+    if not ok then
+        isTeleporting = false
+        TeleportStatus.Text = "Failed: "..tostring(err)
+        TeleportStatus.TextColor3 = currentTheme.Danger
+    end
+end)
+premiumBtn(Up, "Server Hop", UDim2.new(0.31, 0, 0, 44), UDim2.new(0.345, 0, 0, 100), function()
+    if isTeleporting then return end
+    isTeleporting = true
+    TeleportStatus.Text = "Matchmaking..."
+    TeleportStatus.TextColor3 = currentTheme.Warning
+    pcall(function() TeleportService:Teleport(game.PlaceId, LocalPlayer) end)
+end)
+premiumBtn(Up, "Anti-AFK", UDim2.new(0.31, 0, 0, 44), UDim2.new(0.69, 0, 0, 100), function()
+    addSysLog("Anti-AFK loop running in background.", "UTIL")
+end)
+
+local Fp = panel(UtilitiesPage, "FPSPanel", UDim2.new(1, -6, 0, 160), UDim2.new())
+padding(Fp, 16, 16, 14, 14)
+label(Fp, "LOCAL FPS BOOSTER", UDim2.new(1, 0, 0, 24), UDim2.new(), 13, "AccentAlt")
+local fpDesc = label(Fp, "Adjusts local lighting and disables post-effects. Client-side only.",
+    UDim2.new(1, 0, 0, 36), UDim2.new(0, 0, 0, 28), 11, "Muted")
+fpDesc.TextWrapped = true
+
+local function setFPSBoost(enabled)
+    if enabled == isFPSBoostEnabled then return end
+    isFPSBoostEnabled = enabled
+    if enabled then
+        originalLighting.GlobalShadows = Lighting.GlobalShadows
+        originalLighting.FogEnd = Lighting.FogEnd
+        originalLighting.Brightness = Lighting.Brightness
+        table.clear(originalEffects)
+        for _, d in ipairs(Lighting:GetDescendants()) do
+            if d:IsA("PostEffect") then
+                originalEffects[d] = d.Enabled; d.Enabled = false
+            end
+        end
+        Lighting.GlobalShadows = false
+        Lighting.FogEnd = 100000
+        Lighting.Brightness = math.max(Lighting.Brightness, 2)
+        addSysLog("FPS Boost enabled.", "PERF")
+    else
+        Lighting.GlobalShadows = originalLighting.GlobalShadows
+        Lighting.FogEnd = originalLighting.FogEnd
+        Lighting.Brightness = originalLighting.Brightness
+        for e, v in pairs(originalEffects) do if e and e.Parent then e.Enabled = v end end
+        addSysLog("FPS Boost disabled.", "PERF")
+    end
+end
+
+local FPSBoostBtn = premiumBtn(Fp, "Enable FPS Booster", UDim2.new(1, 0, 0, 42), UDim2.new(0, 0, 0, 84), function()
+    setFPSBoost(not isFPSBoostEnabled)
+    FPSBoostBtn.Text = isFPSBoostEnabled and "Disable FPS Booster" or "Enable FPS Booster"
+end)
+
+--==============================================================
+-- PERFORMANCE PAGE
+--==============================================================
+local Pp = panel(PerfPage, "PerfPanel", UDim2.new(1, -6, 0, 300), UDim2.new())
+padding(Pp, 16, 16, 14, 14)
+label(Pp, "LIVE PERFORMANCE", UDim2.new(1, 0, 0, 24), UDim2.new(), 13, "AccentAlt")
+
+local function metric(parent, txt, y)
+    label(parent, txt, UDim2.new(0.55, 0, 0, 30), UDim2.new(0, 0, 0, y), 12, "Muted")
+    local v = label(parent, "--", UDim2.new(0.45, 0, 0, 30), UDim2.new(0.55, 0, 0, y), 13, "Text")
+    v.Font = Enum.Font.GothamSemibold
+    return v
+end
+
+local FPSValue     = metric(Pp, "Frame rate",     40)
+local PingValue    = metric(Pp, "Ping",           76)
+local MemoryValue  = metric(Pp, "Lua memory",     112)
+local ClockValue   = metric(Pp, "Session clock",  148)
+local RemotesValue = metric(Pp, "Logged remotes", 184)
+local PlaceValue   = metric(Pp, "Place ID",       220)
+local PlayersValue = metric(Pp, "Players",        256)
+
+--==============================================================
+-- SETTINGS PAGE (themes + editor + save/load + log)
+--==============================================================
+-- Theme selector panel
+local Tp = panel(SettingsPage, "ThemePanel", UDim2.new(1, -6, 0, 300), UDim2.new())
+padding(Tp, 16, 16, 14, 14)
+label(Tp, "APPEARANCE · THEMES", UDim2.new(1, 0, 0, 24), UDim2.new(), 13, "AccentAlt")
+local ThemeStatus = label(Tp, "Current: "..currentThemeName, UDim2.new(1, 0, 0, 22), UDim2.new(0, 0, 0, 28), 11, "Muted")
+
+local ThemeGrid = create("Frame", {
+    Size = UDim2.new(1, 0, 0, 148), Position = UDim2.new(0, 0, 0, 60),
+    BackgroundTransparency = 1,
+}, Tp)
+create("UIGridLayout", {
+    CellSize = UDim2.new(0.24, -6, 0, 42),
+    CellPadding = UDim2.new(0, 8, 0, 8),
+    SortOrder = Enum.SortOrder.LayoutOrder,
+}, ThemeGrid)
+
+-- Custom color editor
+label(Tp, "CUSTOM COLOR EDITOR (live preview)", UDim2.new(1, 0, 0, 22), UDim2.new(0, 0, 0, 216), 12, "AccentAlt")
+
+local ColorRow = create("Frame", {
+    Size = UDim2.new(1, 0, 0, 60), Position = UDim2.new(0, 0, 0, 240),
+    BackgroundTransparency = 1,
+}, Tp)
+create("UIGridLayout", {
+    CellSize = UDim2.new(0.24, -6, 0, 26),
+    CellPadding = UDim2.new(0, 8, 0, 6),
+    SortOrder = Enum.SortOrder.LayoutOrder,
+}, ColorRow)
+
+local ColorRoles = {"Background", "Surface", "SurfaceAlt", "Accent", "AccentAlt", "Text", "Muted", "Success", "Warning", "Danger"}
+local colorInputs = {}
+
+for i, role in ipairs(ColorRoles) do
+    local cell = create("Frame", {
+        BackgroundColor3 = currentTheme.SurfaceAlt, BorderSizePixel = 0,
+    }, ColorRow)
+    reg(cell, "bg", "SurfaceAlt")
+    corner(cell, 6)
+    local lbl = create("TextLabel", {
+        BackgroundTransparency = 1, Size = UDim2.new(0.4, 0, 1, 0),
+        Text = role, Font = Enum.Font.Gotham, TextSize = 10,
+        TextColor3 = currentTheme.Muted, TextXAlignment = Enum.TextXAlignment.Left,
+    }, cell)
+    reg(lbl, "text", "Muted")
+    padding(lbl, 6, 0, 0, 0)
+    local box = create("TextBox", {
+        Size = UDim2.new(0.6, -4, 1, -4), Position = UDim2.new(0.4, 2, 0, 2),
+        BackgroundColor3 = currentTheme.Surface, BorderSizePixel = 0,
+        Text = colorToHex(currentTheme[role]), TextColor3 = currentTheme.Text,
+        Font = Enum.Font.Code, TextSize = 10, ClearTextOnFocus = false,
+    }, cell)
+    reg(box, "bg", "Surface"); reg(box, "text", "Text")
+    corner(box, 4)
+    colorInputs[role] = box
+end
+
+-- Save / Load / Reset / Apply
+local SaveRow = create("Frame", {
+    Size = UDim2.new(1, 0, 0, 42), Position = UDim2.new(0, 0, 0, 310),
+    BackgroundTransparency = 1,
+}, Tp)
+
+local function refreshColorInputs()
+    for role, box in pairs(colorInputs) do
+        if box and box.Parent then box.Text = colorToHex(currentTheme[role] or Color3.new()) end
+    end
+end
+
+local function applyCustomFromInputs()
+    local newTheme = {}
+    for role, box in pairs(colorInputs) do
+        local c = hexToColor(box.Text)
+        if c then newTheme[role] = c else newTheme[role] = currentTheme[role] end
+    end
+    -- also update current theme in place so preview happens
+    for role, c in pairs(newTheme) do currentTheme[role] = c end
+    currentThemeName = "Custom"
+    applyThemeToAll()
+    ThemeStatus.Text = "Current: Custom (unsaved)"
+end
+
+for role, box in pairs(colorInputs) do
+    box.FocusLost:Connect(function()
+        local c = hexToColor(box.Text)
+        if c then
+            currentTheme[role] = c
+            applyThemeToAll()
+            ThemeStatus.Text = "Current: Custom (unsaved)"
+        else
+            box.Text = colorToHex(currentTheme[role])
+        end
+    end)
+end
+
+premiumBtn(SaveRow, "Save Theme", UDim2.new(0, 130, 1, 0), UDim2.new(0, 0, 0, 0), function()
+    pcall(function()
+        local data = {}
+        for role, _ in pairs(colorInputs) do data[role] = colorToHex(currentTheme[role]) end
+        writefile(settingsPath, HttpService:JSONEncode({theme = currentThemeName, colors = data}))
+        addSysLog("Theme saved.", "SETTINGS")
+    end)
+end).LayoutOrder = 1
+
+premiumBtn(SaveRow, "Load Saved", UDim2.new(0, 130, 1, 0), UDim2.new(0, 136, 0, 0), function()
+    pcall(function()
+        if isfile(settingsPath) then
+            local d = HttpService:JSONDecode(readfile(settingsPath))
+            if d.colors then
+                for role, hex in pairs(d.colors) do
+                    local c = hexToColor(hex)
+                    if c then currentTheme[role] = c end
+                end
+                currentThemeName = d.theme or "Custom"
+                applyThemeToAll()
+                refreshColorInputs()
+                ThemeStatus.Text = "Current: "..currentThemeName
+                addSysLog("Theme loaded from file.", "SETTINGS")
+            end
+        else
+            addSysLog("No saved theme found.", "WARN")
+        end
+    end)
+end).LayoutOrder = 2
+
+premiumBtn(SaveRow, "Reset", UDim2.new(0, 100, 1, 0), UDim2.new(0, 272, 0, 0), function()
+    applyTheme("Midnight")
+    refreshColorInputs()
+end).LayoutOrder = 3
+
+premiumBtn(SaveRow, "Apply", UDim2.new(0, 100, 1, 0), UDim2.new(0, 378, 0, 0), function()
+    applyCustomFromInputs()
+end).LayoutOrder = 4
+
+-- System log panel (moved from Diagnostics)
+local LogPanel = panel(SettingsPage, "LogPanel", UDim2.new(1, -6, 0, 380), UDim2.new())
+padding(LogPanel, 12, 12, 12, 12)
+label(LogPanel, "SYSTEM LOG", UDim2.new(1, 0, 0, 22), UDim2.new(), 12, "AccentAlt")
+
+local DiagSearch = create("TextBox", {
+    Size = UDim2.new(1, 0, 0, 34), Position = UDim2.new(0, 0, 0, 30),
+    BackgroundColor3 = currentTheme.SurfaceAlt, BorderSizePixel = 0,
+    PlaceholderText = "Search logs...", PlaceholderColor3 = currentTheme.Muted,
+    Text = "", TextColor3 = currentTheme.Text, ClearTextOnFocus = false,
+    Font = Enum.Font.Gotham, TextSize = 12, TextXAlignment = Enum.TextXAlignment.Left,
+}, LogPanel)
+reg(DiagSearch, "bg", "SurfaceAlt"); reg(DiagSearch, "text", "Text"); reg(DiagSearch, "placeholder", "Muted")
+corner(DiagSearch, 8); padding(DiagSearch, 10, 10, 0, 0)
+
+LogView = create("TextBox", {
+    Size = UDim2.new(1, 0, 1, -80), Position = UDim2.new(0, 0, 0, 72),
+    BackgroundColor3 = currentTheme.Background, BorderSizePixel = 0,
+    Text = "", TextColor3 = currentTheme.Text,
+    PlaceholderText = "Diagnostic messages...", PlaceholderColor3 = currentTheme.Muted,
+    Font = Enum.Font.Code, TextSize = 11, MultiLine = true, ClearTextOnFocus = false,
+    TextEditable = false, TextXAlignment = Enum.TextXAlignment.Left,
+    TextYAlignment = Enum.TextYAlignment.Top,
+}, LogPanel)
+reg(LogView, "bg", "Background"); reg(LogView, "text", "Text")
+corner(LogView, 8); padding(LogView, 8, 8, 8, 8)
+
+local function refreshLogFilter()
+    local q = string.lower(DiagSearch.Text or "")
+    local lines = {}
+    for _, e in ipairs(logEntries) do
+        local line = string.format("[%s] [%s] %s", e.Time, e.Category, e.Message)
+        if q == "" or string.find(string.lower(line), q, 1, true) then
+            table.insert(lines, line)
+        end
+    end
+    LogView.Text = table.concat(lines, "\n")
+end
+DiagSearch:GetPropertyChangedSignal("Text"):Connect(refreshLogFilter)
+
+--==============================================================
+-- REMOTE LOG UI
+--==============================================================
+local function getNameColor(name)
+    local l = name:lower()
+    if l:match("ban") or l:match("kick") or l:match("detect") or l:match("admin") then
+        return Color3.fromRGB(255, 80, 100)
+    end
+    local hash = 0
+    for i = 1, #name do hash = string.byte(name, i) + (hash*31) end
+    return Color3.fromHSV((math.abs(hash)%100)/100, 0.55, 0.85)
 end
 
 local function updateMultiCode()
-    local fullCode = "-- Multi Code Output\n"
+    local full = "-- Multi Code Output\n"
     for _, item in ipairs(multiList) do
-        local argString = v2s(item.args)
-        fullCode = fullCode .. string.format("game:GetService(\"ReplicatedStorage\").%s:%s(unpack(%s))\n",
-            item.remote.Name, (item.remote.ClassName == "RemoteEvent" and "FireServer" or "InvokeServer"), argString)
+        local a = v2s(item.args)
+        full = full..string.format("game:GetService(\"ReplicatedStorage\").%s:%s(unpack(%s))\n",
+            item.remote.Name,
+            (item.remote.ClassName == "RemoteEvent" and "FireServer" or "InvokeServer"), a)
     end
-    CodeView.Text = fullCode
+    CodeView.Text = full
 end
 
-local function addLog(remote, args, isLoaded)
+local function updateMultiHighlights()
+    for key, entry in pairs(remoteLogs) do
+        local sel = false
+        if multiMode then
+            for _, it in ipairs(multiList) do
+                if it.key == key then sel = true; break end
+            end
+        end
+        if entry.button and entry.button.Parent then
+            entry.button.BackgroundColor3 = sel and currentTheme.Success or entry.origCol
+        end
+    end
+end
+
+--==============================================================
+-- ADD LOG (core spy function)
+--==============================================================
+function addLog(remote, args, isLoaded)
+    if not getgenv().YinetsuUIActive then return end
     if blacklist[remote] or blacklist[remote.Name] then return end
     if recording then
         table.insert(recordedSeq, {remote = remote, args = args})
         if #recordedSeq > 100 then table.remove(recordedSeq, 1) end
     end
     if sniperMode then
-        clearLogsFunc()
+        for _, v in pairs(RemoteLogScroll:GetChildren()) do
+            if v:IsA("TextButton") then v:Destroy() end
+        end
+        remoteLogs = {}; logQueue = {}
         sniperMode = false
+        btnSniper.Text = "Sniper"
     end
-    if spamBlock then
-        spamCount[remote] = (spamCount[remote] or 0) + 1
-        if spamCount[remote] > 20 then
+    if getgenv()._spamBlockEnabled then
+        getgenv()._spamCount = getgenv()._spamCount or {}
+        getgenv()._spamCount[remote] = (getgenv()._spamCount[remote] or 0) + 1
+        if getgenv()._spamCount[remote] > 20 then
             blocklist[remote] = true
-            CodeView.Text = "-- [YINETSU GUARD] Blocked Spammy Remote: " .. remote.Name
+            addSysLog("Blocked spammy remote: "..remote.Name, "GUARD")
             return
         end
-        task.delay(1, function() spamCount[remote] = 0 end)
+        task.delay(1, function() getgenv()._spamCount[remote] = 0 end)
     end
 
     while #logQueue >= MAX_LOGS do
-        local oldestKey = table.remove(logQueue, 1)
-        local entry = remoteLogs[oldestKey]
-        if entry and entry.button and entry.button.Parent then entry.button:Destroy() end
-        remoteLogs[oldestKey] = nil
+        local oldest = table.remove(logQueue, 1)
+        local e = remoteLogs[oldest]
+        if e and e.button and e.button.Parent then e.button:Destroy() end
+        remoteLogs[oldest] = nil
     end
 
     local argString = v2s(args)
-    local groupKey = remote.Name .. "|" .. argString
-    local generatedCode = string.format("local args = %s\ngame:GetService(\"ReplicatedStorage\").%s:%s(unpack(args))",
-        argString, remote.Name, (remote.ClassName == "RemoteEvent" and "FireServer" or "InvokeServer"))
+    local groupKey = remote.Name.."|"..argString
+    local generatedCode = string.format(
+        "local args = %s\ngame:GetService(\"ReplicatedStorage\").%s:%s(unpack(args))",
+        argString, remote.Name,
+        (remote.ClassName == "RemoteEvent" and "FireServer" or "InvokeServer"))
 
     if remoteLogs[groupKey] then
-        local entry = remoteLogs[groupKey]
-        entry.count = entry.count + 1
-        if entry.button and entry.button.Parent then
-            entry.button.Text = " " .. remote.Name .. " (x" .. entry.count .. ")"
-            entry.button.LayoutOrder = layoutOrderNum
+        local e = remoteLogs[groupKey]
+        e.count = e.count + 1
+        if e.button and e.button.Parent then
+            e.button.Text = " "..remote.Name.." (x"..e.count..")"
+            e.button.LayoutOrder = layoutOrderNum
         end
         layoutOrderNum = layoutOrderNum - 1
         return
     end
 
-    local b = Instance.new("TextButton", LogsScroll)
-    b.Name = remote.Name
-    b.LayoutOrder = layoutOrderNum
+    local b = create("TextButton", {
+        Name = remote.Name, LayoutOrder = layoutOrderNum,
+        Size = UDim2.new(1, -4, 0, 32),
+        Text = " "..remote.Name..(isLoaded and " [LOADED]" or "")..
+               (remote.Name:lower():match("ban") or remote.Name:lower():match("kick") and " [DANGER]" or ""),
+        BackgroundColor3 = getNameColor(remote.Name),
+        TextColor3 = Color3.new(1, 1, 1),
+        Font = Enum.Font.Gotham, TextSize = 10,
+        TextXAlignment = Enum.TextXAlignment.Left, AutoButtonColor = false,
+    }, RemoteLogScroll)
+    corner(b, 6)
     layoutOrderNum = layoutOrderNum - 1
-    b.Size = UDim2.new(0.95, 0, 0, 30)
-    local isDanger = remote.Name:lower():match("ban") or remote.Name:lower():match("kick")
-    b.Text = " " .. remote.Name .. (isLoaded and " [LOADED]" or "") .. (isDanger and " [DANGER]" or "")
-    b.BackgroundColor3 = getNameColor(remote.Name)
-    b.TextColor3 = Color3.new(1, 1, 1)
-    b.TextXAlignment = Enum.TextXAlignment.Left
-    b.TextSize = 10
-    b.Font = Enum.Font.GothamMedium
-    b.AutoButtonColor = false
-    b.BorderSizePixel = 0
-    makeCorner(b, 8)
-    local origCol = b.BackgroundColor3
 
+    local origCol = b.BackgroundColor3
     remoteLogs[groupKey] = {button = b, count = 1, origCol = origCol, code = generatedCode, remote = remote, args = args}
     table.insert(logQueue, groupKey)
 
     b.MouseButton1Click:Connect(function()
         if multiMode then
-            local idx = nil
-            for i, v in ipairs(multiList) do
-                if v.key == groupKey then idx = i break end
-            end
+            local idx
+            for i, v in ipairs(multiList) do if v.key == groupKey then idx = i; break end end
             if idx then
-                table.remove(multiList, idx)
-                b.BackgroundColor3 = origCol
+                table.remove(multiList, idx); b.BackgroundColor3 = origCol
             else
                 table.insert(multiList, {remote = remote, args = args, key = groupKey})
-                b.BackgroundColor3 = Color3.fromRGB(0, 200, 100)
+                b.BackgroundColor3 = currentTheme.Success
             end
             updateMultiCode()
         else
             selectedRemote = remote
             selectedArgs = args
             CodeView.Text = generatedCode
-            if EditorMain.Visible then EdBox.Text = yinetsuBeautify(args) end
+            if EdBox then EdBox.Text = yinetsuBeautify(args) end
+            for _, v in pairs(RemoteLogScroll:GetChildren()) do
+                if v:IsA("TextButton") and v ~= b then
+                    TweenService:Create(v, TweenInfo.new(0.15), {BackgroundColor3 = remoteLogs[v.Name.."|"..v2s({})] and currentTheme.SurfaceAlt or currentTheme.SurfaceAlt}):Play()
+                end
+            end
+            TweenService:Create(b, TweenInfo.new(0.15), {BackgroundColor3 = currentTheme.Accent}):Play()
+        end
+    end)
+
+    b.MouseEnter:Connect(function()
+        if not multiMode then
+            TweenService:Create(b, TweenInfo.new(0.12), {BackgroundColor3 = currentTheme.Accent}):Play()
+        end
+    end)
+    b.MouseLeave:Connect(function()
+        if not multiMode then
+            TweenService:Create(b, TweenInfo.new(0.12), {BackgroundColor3 = origCol}):Play()
         end
     end)
 end
 
+-- Search filter
 SearchBar:GetPropertyChangedSignal("Text"):Connect(function()
-    local q = SearchBar.Text:lower()
-    for key, entry in pairs(remoteLogs) do
+    local s = SearchBar.Text:lower()
+    for _, entry in pairs(remoteLogs) do
         if entry.button and entry.button.Parent then
-            entry.button.Visible = q == "" or string.find(entry.button.Name:lower(), q, 1, true)
+            entry.button.Visible = (s == "" or string.find(entry.button.Name:lower(), s, 1, true))
         end
     end
 end)
 
-ClearLogsBtn.MouseButton1Click:Connect(clearLogsFunc)
-
-ScanBtn.MouseButton1Click:Connect(function()
-    ScanBtn.Text = "SCANNING..."
-    local count = 0
-    local scanned = {}
-    local function scan(inst)
-        for _, v in pairs(inst:GetDescendants()) do
-            if (v:IsA("RemoteEvent") or v:IsA("RemoteFunction")) and not scanned[v] then
-                scanned[v] = true
-                addLog(v, {"[AUTO SCAN]"}, true)
-                count = count + 1
-                if count % 20 == 0 then task.wait() end
-            end
-        end
+--==============================================================
+-- BUTTON WIRING
+--==============================================================
+btnClearLogs.Activated:Connect(function()
+    for _, v in pairs(RemoteLogScroll:GetChildren()) do
+        if v:IsA("TextButton") then v:Destroy() end
     end
-    pcall(function() scan(ReplicatedStorage) end)
-    pcall(function() scan(workspace) end)
-    ScanBtn.Text = "ADDED " .. count
-    task.wait(1.2)
-    ScanBtn.Text = "SCAN ALL"
+    remoteLogs = {}; logQueue = {}; layoutOrderNum = 999999999
+    addSysLog("Remote list cleared.", "SPY")
 end)
 
--- ============================================================
--- PAGE: MODIFIER
--- ============================================================
-local PageMod = Instance.new("Frame", PageHolder)
-registerPage("Modifier", PageMod)
-
-local modIntro = Instance.new("TextLabel", PageMod)
-modIntro.Size = UDim2.new(1, 0, 0, 36)
-modIntro.BackgroundTransparency = 1
-modIntro.Text = "Configure argument modification rules. Applies to intercepted remote calls."
-modIntro.TextColor3 = CurrentTheme.TextDim
-modIntro.Font = Enum.Font.Gotham
-modIntro.TextSize = 11
-modIntro.TextXAlignment = Enum.TextXAlignment.Left
-modIntro.TextWrapped = true
-registerThemed(modIntro, "TextColor3", "TextDim")
-
-local Modifier = Instance.new("Frame", PageMod)
-Modifier.Size = UDim2.new(1, 0, 0, 140)
-Modifier.Position = UDim2.new(0, 0, 0, 50)
-Modifier.BackgroundColor3 = CurrentTheme.Panel
-Modifier.BorderSizePixel = 0
-makeCorner(Modifier, 12)
-registerThemed(Modifier, "BackgroundColor3", "Panel")
-local modStroke = makeStroke(Modifier, CurrentTheme.Border, 1, 0.6)
-registerThemed(modStroke, "Color", "Border")
-makePadding(Modifier, 14)
-
-local function inputField(parent, label, ph, y)
-    local l = Instance.new("TextLabel", parent)
-    l.Size = UDim2.new(1, 0, 0, 14); l.Position = UDim2.new(0, 0, 0, y)
-    l.BackgroundTransparency = 1; l.Text = label
-    l.TextColor3 = CurrentTheme.TextDim; l.Font = Enum.Font.GothamMedium; l.TextSize = 9
-    l.TextXAlignment = Enum.TextXAlignment.Left
-    registerThemed(l, "TextColor3", "TextDim")
-    local box = Instance.new("TextBox", parent)
-    box.Size = UDim2.new(1, 0, 0, 32); box.Position = UDim2.new(0, 0, 0, y + 18)
-    box.BackgroundColor3 = CurrentTheme.PanelAlt; box.BorderSizePixel = 0
-    box.PlaceholderText = ph; box.PlaceholderColor3 = CurrentTheme.TextDim
-    box.Text = ""; box.TextColor3 = CurrentTheme.Text
-    box.Font = Enum.Font.Gotham; box.TextSize = 11
-    box.TextXAlignment = Enum.TextXAlignment.Left
-    box.ClearTextOnFocus = false
-    makeCorner(box, 8); makePadding(box, 10)
-    local s = makeStroke(box, CurrentTheme.Border, 1, 0.65)
-    registerThemed(box, "BackgroundColor3", "PanelAlt")
-    registerThemed(box, "TextColor3", "Text")
-    registerThemed(s, "Color", "Border")
-    return box
-end
-
-local modFindBox = inputField(Modifier, "FIND VALUE", "e.g. 100", 0)
-local modSetBox  = inputField(Modifier, "REPLACE WITH", "e.g. 99999", 60)
-
-modFindBox:GetPropertyChangedSignal("Text"):Connect(function() cachedModTarget = modFindBox.Text end)
-modSetBox:GetPropertyChangedSignal("Text"):Connect(function() cachedModReplace = modSetBox.Text end)
-
-local modToggleBtn = Instance.new("TextButton", PageMod)
-modToggleBtn.Size = UDim2.new(1, 0, 0, 40)
-modToggleBtn.Position = UDim2.new(0, 0, 0, 210)
-modToggleBtn.BackgroundColor3 = CurrentTheme.PanelAlt
-modToggleBtn.Text = "MODIFIER: DISABLED"
-modToggleBtn.TextColor3 = CurrentTheme.Text
-modToggleBtn.Font = Enum.Font.GothamBold
-modToggleBtn.TextSize = 12
-modToggleBtn.AutoButtonColor = false
-modToggleBtn.BorderSizePixel = 0
-makeCorner(modToggleBtn, 10)
-local modBtnStroke = makeStroke(modToggleBtn, CurrentTheme.Border, 1, 0.5)
-registerThemed(modToggleBtn, "BackgroundColor3", "PanelAlt")
-registerThemed(modToggleBtn, "TextColor3", "Text")
-registerThemed(modBtnStroke, "Color", "Border")
-makeButtonPremium(modToggleBtn, {color = CurrentTheme.PanelAlt})
-
-modToggleBtn.MouseButton1Click:Connect(function()
-    modifierActive = not modifierActive
-    modToggleBtn.Text = modifierActive and "MODIFIER: ENABLED" or "MODIFIER: DISABLED"
-    tw(modToggleBtn, 0.25, {BackgroundColor3 = modifierActive and CurrentTheme.Success or CurrentTheme.PanelAlt})
-end)
-
--- ============================================================
--- PAGE: THEMES
--- ============================================================
-local PageThemes = Instance.new("Frame", PageHolder)
-registerPage("Themes", PageThemes)
-
-local themeIntro = Instance.new("TextLabel", PageThemes)
-themeIntro.Size = UDim2.new(1, 0, 0, 36)
-themeIntro.BackgroundTransparency = 1
-themeIntro.Text = "Choose a premium theme. All elements transition instantly with smooth tweens."
-themeIntro.TextColor3 = CurrentTheme.TextDim
-themeIntro.Font = Enum.Font.Gotham
-themeIntro.TextSize = 11
-themeIntro.TextXAlignment = Enum.TextXAlignment.Left
-themeIntro.TextWrapped = true
-registerThemed(themeIntro, "TextColor3", "TextDim")
-
-local ThemeGrid = Instance.new("Frame", PageThemes)
-ThemeGrid.Size = UDim2.new(1, 0, 1, -50)
-ThemeGrid.Position = UDim2.new(0, 0, 0, 50)
-ThemeGrid.BackgroundTransparency = 1
-local themeLayout = Instance.new("UIGridLayout", ThemeGrid)
-themeLayout.CellSize = UDim2.new(0, 240, 0, 70)
-themeLayout.CellPadding = UDim2.new(0, 12, 0, 12)
-
-for key, theme in pairs(Themes) do
-    local card = Instance.new("TextButton", ThemeGrid)
-    card.BackgroundColor3 = theme.Panel
-    card.Text = ""
-    card.AutoButtonColor = false
-    card.BorderSizePixel = 0
-    makeCorner(card, 12)
-    makeGradientStroke(card, theme.Border, theme.Highlight, 1.5, 30)
-
-    local accentBar = Instance.new("Frame", card)
-    accentBar.Size = UDim2.new(0, 6, 1, -20)
-    accentBar.Position = UDim2.new(0, 10, 0, 10)
-    accentBar.BackgroundColor3 = theme.Accent
-    accentBar.BorderSizePixel = 0
-    makeCorner(accentBar, 3)
-
-    local title = Instance.new("TextLabel", card)
-    title.Size = UDim2.new(1, -30, 0, 20); title.Position = UDim2.new(0, 26, 0, 14)
-    title.BackgroundTransparency = 1; title.Text = theme.Name
-    title.TextColor3 = theme.Text; title.Font = Enum.Font.GothamBold; title.TextSize = 13
-    title.TextXAlignment = Enum.TextXAlignment.Left
-
-    local sub = Instance.new("TextLabel", card)
-    sub.Size = UDim2.new(1, -30, 0, 16); sub.Position = UDim2.new(0, 26, 0, 36)
-    sub.BackgroundTransparency = 1; sub.Text = "Tap to apply"
-    sub.TextColor3 = theme.TextDim; sub.Font = Enum.Font.Gotham; sub.TextSize = 10
-    sub.TextXAlignment = Enum.TextXAlignment.Left
-
-    card.MouseButton1Click:Connect(function() applyTheme(key) end)
-end
-
--- ============================================================
--- PAGE: EDITOR (embedded, wraps existing EditorMain content)
--- ============================================================
-local PageEditor = Instance.new("Frame", PageHolder)
-registerPage("Editor", PageEditor)
-
-local editorPageData = {}
-local editorCurrentPage = 1
-local function editorGetPage(p)
-    if not editorPageData[p] then
-        editorPageData[p] = {text = "{\n  [1] = 'value'\n}", looping = false, speed = 0.1}
-    end
-    return editorPageData[p]
-end
-editorGetPage(1)
-
-local EdTopBar = Instance.new("Frame", PageEditor)
-EdTopBar.Size = UDim2.new(1, 0, 0, 40)
-EdTopBar.BackgroundColor3 = CurrentTheme.Panel
-EdTopBar.BorderSizePixel = 0
-makeCorner(EdTopBar, 10)
-registerThemed(EdTopBar, "BackgroundColor3", "Panel")
-local edTopStroke = makeStroke(EdTopBar, CurrentTheme.Border, 1, 0.6)
-registerThemed(edTopStroke, "Color", "Border")
-
-local EdPageLabel = Instance.new("TextLabel", EdTopBar)
-EdPageLabel.Size = UDim2.new(0, 140, 1, 0)
-EdPageLabel.Position = UDim2.new(0, 14, 0, 0)
-EdPageLabel.BackgroundTransparency = 1
-EdPageLabel.Text = "EDITOR — PAGE 1"
-EdPageLabel.TextColor3 = CurrentTheme.Highlight
-EdPageLabel.Font = Enum.Font.GothamBold
-EdPageLabel.TextSize = 12
-EdPageLabel.TextXAlignment = Enum.TextXAlignment.Left
-registerThemed(EdPageLabel, "TextColor3", "Highlight")
-
-local function edBtn(text, pos)
-    local b = Instance.new("TextButton", EdTopBar)
-    b.Size = UDim2.new(0, 80, 1, -12)
-    b.Position = pos
-    b.BackgroundColor3 = CurrentTheme.PanelAlt
-    b.Text = text
-    b.TextColor3 = CurrentTheme.Text
-    b.Font = Enum.Font.GothamBold
-    b.TextSize = 10
-    b.AutoButtonColor = false
-    b.BorderSizePixel = 0
-    makeCorner(b, 8)
-    local s = makeStroke(b, CurrentTheme.Border, 1, 0.6)
-    registerThemed(b, "BackgroundColor3", "PanelAlt")
-    registerThemed(b, "TextColor3", "Text")
-    registerThemed(s, "Color", "Border")
-    makeButtonPremium(b, {color = CurrentTheme.PanelAlt})
-    return b
-end
-
-local btnPrevEd = edBtn("◀ PREV", UDim2.new(1, -310, 0, 6))
-local btnNextEd = edBtn("NEXT ▶", UDim2.new(1, -225, 0, 6))
-local btnRunEd  = edBtn("RUN",     UDim2.new(1, -140, 0, 6))
-local btnLoopEd = edBtn("LOOP",    UDim2.new(1, -50, 0, 6))
-
-local EdBox = Instance.new("TextBox", PageEditor)
-EdBox.Size = UDim2.new(1, 0, 1, -50)
-EdBox.Position = UDim2.new(0, 0, 0, 50)
-EdBox.BackgroundColor3 = CurrentTheme.Panel
-EdBox.BorderSizePixel = 0
-EdBox.Text = editorGetPage(1).text
-EdBox.TextColor3 = CurrentTheme.Highlight
-EdBox.Font = Enum.Font.Code
-EdBox.TextSize = 12
-EdBox.MultiLine = true
-EdBox.ClearTextOnFocus = false
-EdBox.TextXAlignment = Enum.TextXAlignment.Left
-EdBox.TextYAlignment = Enum.TextYAlignment.Top
-EdBox.TextWrapped = true
-makeCorner(EdBox, 10)
-makePadding(EdBox, 12)
-local edStroke = makeStroke(EdBox, CurrentTheme.Border, 1, 0.6)
-registerThemed(EdBox, "BackgroundColor3", "Panel")
-registerThemed(EdBox, "TextColor3", "Highlight")
-registerThemed(edStroke, "Color", "Border")
-
-local function editorRefresh()
-    local p = editorGetPage(editorCurrentPage)
-    EdBox.Text = p.text
-    EdPageLabel.Text = "EDITOR — PAGE " .. editorCurrentPage
-    btnLoopEd.Text = p.looping and "LOOP ● ON" or "LOOP"
-    tw(btnLoopEd, 0.25, {BackgroundColor3 = p.looping and CurrentTheme.Success or CurrentTheme.PanelAlt})
-end
-
-EdBox:GetPropertyChangedSignal("Text"):Connect(function()
-    editorGetPage(editorCurrentPage).text = EdBox.Text
-end)
-
-btnPrevEd.MouseButton1Click:Connect(function()
-    if editorCurrentPage > 1 then editorCurrentPage = editorCurrentPage - 1; editorRefresh() end
-end)
-btnNextEd.MouseButton1Click:Connect(function()
-    editorCurrentPage = editorCurrentPage + 1; editorGetPage(editorCurrentPage); editorRefresh()
-end)
-btnRunEd.MouseButton1Click:Connect(function()
-    if not selectedRemote or not selectedRemote.Parent then
-        CodeView.Text = "-- No remote selected"
-        return
-    end
-    local s, res = pcall(function() return loadstring("return " .. EdBox.Text)() end)
-    if s and typeof(res) == "table" then
-        pcall(function()
-            if selectedRemote.ClassName == "RemoteEvent" then
-                selectedRemote:FireServer(unpack(res))
-            else
-                selectedRemote:InvokeServer(unpack(res))
-            end
-        end)
-    end
-end)
-btnLoopEd.MouseButton1Click:Connect(function()
-    local p = editorGetPage(editorCurrentPage)
-    p.looping = not p.looping
-    editorRefresh()
-    if p.looping then
-        task.spawn(function()
-            while p.looping and getgenv().YinetsuUIActive do
-                if selectedRemote and selectedRemote.Parent then
-                    local s, res = pcall(function() return loadstring("return " .. p.text)() end)
-                    if s and typeof(res) == "table" then
-                        pcall(function()
-                            if selectedRemote.ClassName == "RemoteEvent" then
-                                selectedRemote:FireServer(unpack(res))
-                            else
-                                selectedRemote:InvokeServer(unpack(res))
-                            end
-                        end)
-                    end
-                end
-                task.wait(p.speed)
-            end
-        end)
-    end
-end)
-editorRefresh()
-
--- ============================================================
--- PAGE: CHEATS (grid + all original buttons)
--- ============================================================
-local PageCheats = Instance.new("Frame", PageHolder)
-registerPage("Cheats", PageCheats)
-
-local CheatScroll = Instance.new("ScrollingFrame", PageCheats)
-CheatScroll.Size = UDim2.new(1, 0, 1, 0)
-CheatScroll.BackgroundTransparency = 1
-CheatScroll.ScrollBarThickness = 3
-CheatScroll.ScrollBarImageColor3 = CurrentTheme.Accent
-CheatScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
-
-local CheatGrid = Instance.new("UIGridLayout", CheatScroll)
-CheatGrid.CellSize = UDim2.new(0, 145, 0, 36)
-CheatGrid.CellPadding = UDim2.new(0, 10, 0, 10)
-
-local gridButtonRegistry = {}
-
-local function createGridBtn(text, color)
-    local b = Instance.new("TextButton", CheatScroll)
-    b.BackgroundColor3 = color or CurrentTheme.PanelAlt
-    b.Text = text
-    b.TextColor3 = CurrentTheme.Text
-    b.Font = Enum.Font.GothamBold
-    b.TextSize = 10
-    b.AutoButtonColor = false
-    b.BorderSizePixel = 0
-    makeCorner(b, 10)
-    local s = makeStroke(b, CurrentTheme.Border, 1, 0.6)
-    registerThemed(b, "BackgroundColor3", "PanelAlt")
-    registerThemed(b, "TextColor3", "Text")
-    registerThemed(s, "Color", "Border")
-    makeButtonPremium(b, {color = CurrentTheme.PanelAlt})
-    return b
-end
-
--- Preserving original grid buttons (relocated into cheats page)
-local bOpenEd    = createGridBtn("OPEN EDITOR", Color3.fromRGB(180, 100, 255))
-local bToggleEBtn= createGridBtn("Editor Icon: OFF", Color3.fromRGB(100, 50, 150))
-local bCheatMenu = createGridBtn("CHEAT MENU", Color3.fromRGB(255, 50, 255))
-local b3         = createGridBtn("Run Code", Color3.fromRGB(0, 200, 100))
-local bSniper    = createGridBtn("Sniper: OFF", Color3.fromRGB(255, 0, 255))
-local b1         = createGridBtn("Copy Code")
-local b6         = createGridBtn("Clr Logs", Color3.fromRGB(120, 40, 40))
-local bBlockSpam = createGridBtn("Block Spam", Color3.fromRGB(200, 100, 0))
-local bClearFilters = createGridBtn("Reset Filters", Color3.fromRGB(150, 80, 40))
-local bSpam50    = createGridBtn("Spam 50x", Color3.fromRGB(255, 50, 50))
-local bRecord    = createGridBtn("Rec Seq", Color3.fromRGB(255, 100, 100))
-local bMakeScript= createGridBtn("Make Script", Color3.fromRGB(255, 215, 0))
-local b7         = createGridBtn("Exclude (i)")
-local b8         = createGridBtn("Exclude (n)")
-local b10        = createGridBtn("Block (i)")
-local b11        = createGridBtn("Block (n)")
-local bDecompile = createGridBtn("Decompiler+", Color3.fromRGB(70, 30, 100))
-local bSaveFile  = createGridBtn("Save File", Color3.fromRGB(0, 120, 200))
-local bMulti     = createGridBtn("Multi Code", Color3.fromRGB(50, 50, 60))
-local bClearMulti= createGridBtn("Clear Multi", Color3.fromRGB(100, 30, 30))
-local b2         = createGridBtn("Copy Path")
-local b4         = createGridBtn("Get Script")
-local b5         = createGridBtn("Func Info")
-local bYT        = createGridBtn("YouTube", Color3.fromRGB(200, 0, 0))
-local b12        = createGridBtn("Destroy UI", Color3.fromRGB(60, 60, 65))
-local bScanAll   = createGridBtn("Scan All", Color3.fromRGB(0, 150, 255))
-local bRunAllLogs= createGridBtn("Run All Logs", Color3.fromRGB(255, 100, 0))
-
--- Speed containers for Loop and Loop Clr
-local function createSpeedContainer(btnText, defaultSpeed, color)
-    local frame = Instance.new("Frame", CheatScroll)
-    frame.BackgroundColor3 = color
-    frame.BorderSizePixel = 0
-    makeCorner(frame, 10)
-    local s = makeStroke(frame, CurrentTheme.Border, 1, 0.6)
-    registerThemed(s, "Color", "Border")
-    local btn = Instance.new("TextButton", frame)
-    btn.Size = UDim2.new(0.65, 0, 1, 0)
-    btn.BackgroundTransparency = 1
-    btn.Text = btnText
-    btn.TextColor3 = Color3.new(1,1,1)
-    btn.TextSize = 10
-    btn.Font = Enum.Font.GothamBold
-    btn.AutoButtonColor = false
-    local box = Instance.new("TextBox", frame)
-    box.Size = UDim2.new(0.35, 0, 0.8, 0)
-    box.Position = UDim2.new(0.6, 0, 0.1, 0)
-    box.BackgroundColor3 = CurrentTheme.Panel
-    box.Text = tostring(defaultSpeed)
-    box.TextColor3 = Color3.new(1,1,1)
-    box.TextSize = 9
-    box.Font = Enum.Font.Code
-    makeCorner(box, 6)
-    registerThemed(box, "BackgroundColor3", "Panel")
-    return btn, box
-end
-
-local bPlaySeq, SeqSpeedBox = createSpeedContainer("Play Seq", 0.1, Color3.fromRGB(100, 255, 100))
-local b9, SpeedBox = createSpeedContainer("Loop", 0.1, Color3.fromRGB(40, 120, 40))
-local b13, ClearSpeedBox = createSpeedContainer("Loop Clr", 1.0, Color3.fromRGB(150, 50, 50))
-
--- ============================================================
--- EDITOR FLOATING WINDOW (multi-page, original)
--- ============================================================
-local EditorMain = Instance.new("Frame", ScreenGui)
-EditorMain.Name = "YinetsuEditor"
-EditorMain.Size = UDim2.new(0, 340, 0, 420)
-EditorMain.Position = UDim2.new(0.5, 380, 0.5, -210)
-EditorMain.BackgroundColor3 = CurrentTheme.Background
-EditorMain.BorderSizePixel = 0
-EditorMain.Visible = false
-EditorMain.Active = true
-EditorMain.Draggable = true
-EditorMain.ZIndex = 100
-makeCorner(EditorMain, 14)
-local edMainStroke = makeGradientStroke(EditorMain, CurrentTheme.Border, CurrentTheme.Highlight, 1.6, 45)
-registerThemed(EditorMain, "BackgroundColor3", "Background")
-
-local EdTitle = Instance.new("TextLabel", EditorMain)
-EdTitle.Size = UDim2.new(1, 0, 0, 32)
-EdTitle.BackgroundTransparency = 1
-EdTitle.Text = " YINETSU EDITOR"
-EdTitle.TextColor3 = CurrentTheme.Accent
-EdTitle.Font = Enum.Font.GothamBlack
-EdTitle.TextSize = 14
-EdTitle.TextXAlignment = Enum.TextXAlignment.Left
-registerThemed(EdTitle, "TextColor3", "Accent")
-
-local EdTitleBar = makePadding(EdTitle, 10)
-
-local EdClose = Instance.new("TextButton", EditorMain)
-EdClose.Size = UDim2.new(0, 22, 0, 22)
-EdClose.Position = UDim2.new(1, -32, 0, 6)
-EdClose.BackgroundColor3 = CurrentTheme.PanelAlt
-EdClose.Text = "✕"
-EdClose.TextColor3 = CurrentTheme.Text
-EdClose.Font = Enum.Font.GothamBold
-EdClose.TextSize = 11
-EdClose.AutoButtonColor = false
-EdClose.BorderSizePixel = 0
-makeCorner(EdClose, 6)
-registerThemed(EdClose, "BackgroundColor3", "PanelAlt")
-registerThemed(EdClose, "TextColor3", "Text")
-makeButtonPremium(EdClose, {color = CurrentTheme.PanelAlt, accent = CurrentTheme.Danger})
-EdClose.MouseButton1Click:Connect(function() EditorMain.Visible = false end)
-
-local EdMainBox = Instance.new("TextBox", EditorMain)
-EdMainBox.Size = UDim2.new(0.9, 0, 0.42, 0)
-EdMainBox.Position = UDim2.new(0.05, 0, 0.1, 0)
-EdMainBox.BackgroundColor3 = CurrentTheme.Panel
-EdMainBox.Text = "{}"
-EdMainBox.TextColor3 = CurrentTheme.Highlight
-EdMainBox.TextSize = 11
-EdMainBox.MultiLine = true
-EdMainBox.ClearTextOnFocus = false
-EdMainBox.TextXAlignment = Enum.TextXAlignment.Left
-EdMainBox.TextYAlignment = Enum.TextYAlignment.Top
-EdMainBox.Font = Enum.Font.Code
-makeCorner(EdMainBox, 10)
-makePadding(EdMainBox, 10)
-local edMainBoxStroke = makeStroke(EdMainBox, CurrentTheme.Border, 1, 0.6)
-registerThemed(EdMainBox, "BackgroundColor3", "Panel")
-registerThemed(EdMainBox, "TextColor3", "Highlight")
-registerThemed(edMainBoxStroke, "Color", "Border")
-
--- Sync floating editor with embedded editor page
-EdMainBox:GetPropertyChangedSignal("Text"):Connect(function()
-    editorGetPage(editorCurrentPage).text = EdMainBox.Text
-end)
-
--- Floating editor page tracking
-local floatPage = 1
-local floatPages = {{text = "{}", looping = false, speed = 0.1}}
-
-local function floatGetPage(p)
-    if not floatPages[p] then floatPages[p] = {text = "{}", looping = false, speed = 0.1} end
-    return floatPages[p]
-end
-
-local function floatRefresh()
-    local p = floatGetPage(floatPage)
-    EdMainBox.Text = p.text
-    FloatPageLabel.Text = "PAGE: " .. floatPage
-    FloatLoopBtn.Text = p.looping and "LOOP PAGE: ON" or "LOOP PAGE: OFF"
-    tw(FloatLoopBtn, 0.25, {BackgroundColor3 = p.looping and CurrentTheme.Success or CurrentTheme.PanelAlt})
-end
-
-local function edBtn2(text, pos, col)
-    local b = Instance.new("TextButton", EditorMain)
-    b.Size = UDim2.new(0.42, 0, 0, 30)
-    b.Position = pos
-    b.Text = text
-    b.BackgroundColor3 = col or CurrentTheme.PanelAlt
-    b.TextColor3 = Color3.new(1,1,1)
-    b.Font = Enum.Font.GothamBold
-    b.TextSize = 10
-    b.AutoButtonColor = false
-    b.BorderSizePixel = 0
-    makeCorner(b, 8)
-    local s = makeStroke(b, CurrentTheme.Border, 1, 0.55)
-    registerThemed(b, "BackgroundColor3", "PanelAlt")
-    registerThemed(s, "Color", "Border")
-    makeButtonPremium(b, {color = CurrentTheme.PanelAlt})
-    return b
-end
-
-local btnRun = edBtn2("RUN CODE", UDim2.new(0.05, 0, 0.55, 0), Color3.fromRGB(0, 200, 100))
-local btnTemplates = edBtn2("TEMPLATES (AI)", UDim2.new(0.53, 0, 0.55, 0), Color3.fromRGB(255, 150, 0))
-local btnBeauty = edBtn2("BEAUTIFY", UDim2.new(0.05, 0, 0.65, 0), Color3.fromRGB(60, 150, 180))
-local btnMinify = edBtn2("MINIFY", UDim2.new(0.53, 0, 0.65, 0), Color3.fromRGB(100, 100, 100))
-
-local LoopEdFrame = Instance.new("Frame", EditorMain)
-LoopEdFrame.Size = UDim2.new(0.9, 0, 0, 30)
-LoopEdFrame.Position = UDim2.new(0.05, 0, 0.75, 0)
-LoopEdFrame.BackgroundColor3 = CurrentTheme.PanelAlt
-LoopEdFrame.BorderSizePixel = 0
-makeCorner(LoopEdFrame, 8)
-registerThemed(LoopEdFrame, "BackgroundColor3", "PanelAlt")
-
-local FloatLoopBtn = Instance.new("TextButton", LoopEdFrame)
-FloatLoopBtn.Size = UDim2.new(0.7, 0, 1, 0)
-FloatLoopBtn.BackgroundTransparency = 1
-FloatLoopBtn.Text = "LOOP PAGE: OFF"
-FloatLoopBtn.TextColor3 = Color3.new(1,1,1)
-FloatLoopBtn.Font = Enum.Font.GothamBold
-FloatLoopBtn.TextSize = 10
-FloatLoopBtn.AutoButtonColor = false
-
-local floatSpeedBox = Instance.new("TextBox", LoopEdFrame)
-floatSpeedBox.Size = UDim2.new(0.25, 0, 0.8, 0)
-floatSpeedBox.Position = UDim2.new(0.72, 0, 0.1, 0)
-floatSpeedBox.Text = "0.1"
-floatSpeedBox.BackgroundColor3 = CurrentTheme.Panel
-floatSpeedBox.TextColor3 = Color3.new(1,1,1)
-floatSpeedBox.TextSize = 9
-floatSpeedBox.Font = Enum.Font.Code
-floatSpeedBox.BorderSizePixel = 0
-makeCorner(floatSpeedBox, 6)
-registerThemed(floatSpeedBox, "BackgroundColor3", "Panel")
-
-local FloatPageFrame = Instance.new("Frame", EditorMain)
-FloatPageFrame.Size = UDim2.new(0.9, 0, 0, 30)
-FloatPageFrame.Position = UDim2.new(0.05, 0, 0.85, 0)
-FloatPageFrame.BackgroundTransparency = 1
-
-local btnPrevPage = Instance.new("TextButton", FloatPageFrame)
-btnPrevPage.Size = UDim2.new(0.2, 0, 1, 0)
-btnPrevPage.BackgroundColor3 = CurrentTheme.PanelAlt
-btnPrevPage.Text = "<"
-btnPrevPage.TextColor3 = Color3.new(1,1,1)
-btnPrevPage.Font = Enum.Font.GothamBold
-btnPrevPage.BorderSizePixel = 0
-btnPrevPage.AutoButtonColor = false
-makeCorner(btnPrevPage, 8)
-registerThemed(btnPrevPage, "BackgroundColor3", "PanelAlt")
-makeButtonPremium(btnPrevPage, {color = CurrentTheme.PanelAlt})
-
-local btnNextPage = Instance.new("TextButton", FloatPageFrame)
-btnNextPage.Size = UDim2.new(0.2, 0, 1, 0)
-btnNextPage.Position = UDim2.new(0.8, 0, 0, 0)
-btnNextPage.BackgroundColor3 = CurrentTheme.PanelAlt
-btnNextPage.Text = ">"
-btnNextPage.TextColor3 = Color3.new(1,1,1)
-btnNextPage.Font = Enum.Font.GothamBold
-btnNextPage.BorderSizePixel = 0
-btnNextPage.AutoButtonColor = false
-makeCorner(btnNextPage, 8)
-registerThemed(btnNextPage, "BackgroundColor3", "PanelAlt")
-makeButtonPremium(btnNextPage, {color = CurrentTheme.PanelAlt})
-
-local FloatPageLabel = Instance.new("TextLabel", FloatPageFrame)
-FloatPageLabel.Size = UDim2.new(0.6, 0, 1, 0)
-FloatPageLabel.Position = UDim2.new(0.2, 0, 0, 0)
-FloatPageLabel.BackgroundTransparency = 1
-FloatPageLabel.Text = "PAGE: 1"
-FloatPageLabel.TextColor3 = CurrentTheme.Text
-FloatPageLabel.Font = Enum.Font.GothamBold
-FloatPageLabel.TextSize = 11
-registerThemed(FloatPageLabel, "TextColor3", "Text")
-
-btnPrevPage.MouseButton1Click:Connect(function()
-    if floatPage > 1 then floatPage = floatPage - 1; floatRefresh() end
-end)
-btnNextPage.MouseButton1Click:Connect(function()
-    floatPage = floatPage + 1; floatGetPage(floatPage); floatRefresh()
-end)
-FloatLoopBtn.MouseButton1Click:Connect(function()
-    local p = floatGetPage(floatPage)
-    p.looping = not p.looping
-    floatRefresh()
-    if p.looping then
-        task.spawn(function()
-            while p.looping and getgenv().YinetsuUIActive do
-                if selectedRemote and selectedRemote.Parent then
-                    local s, res = pcall(function() return loadstring("return " .. p.text)() end)
-                    if s and typeof(res) == "table" then
-                        pcall(function()
-                            if selectedRemote.ClassName == "RemoteEvent" then
-                                selectedRemote:FireServer(unpack(res))
-                            else
-                                selectedRemote:InvokeServer(unpack(res))
-                            end
-                        end)
-                    end
-                end
-                task.wait(tonumber(floatSpeedBox.Text) or 0.1)
-            end
-        end)
-    end
-end)
-
-EdMainBox:GetPropertyChangedSignal("Text"):Connect(function()
-    floatGetPage(floatPage).text = EdMainBox.Text
-end)
-floatSpeedBox:GetPropertyChangedSignal("Text"):Connect(function()
-    floatGetPage(floatPage).speed = tonumber(floatSpeedBox.Text) or 0.1
-end)
-floatRefresh()
-
--- Editor buttons (original logic)
-btnRun.MouseButton1Click:Connect(function()
-    if not selectedRemote or not selectedRemote.Parent then
-        CodeView.Text = "-- No remote selected"
-        return
-    end
-    local s, res = pcall(function() return loadstring("return " .. EdMainBox.Text)() end)
-    if s and typeof(res) == "table" then
-        pcall(function()
-            if selectedRemote.ClassName == "RemoteEvent" then
-                selectedRemote:FireServer(unpack(res))
-            else
-                local ret = {selectedRemote:InvokeServer(unpack(res))}
-                CodeView.Text = "-- [[ SERVER RETURN DATA ]]\n" .. yinetsuBeautify(ret)
-            end
-        end)
-    end
-end)
-
-local templateIndex = 1
-local templates = {
-    {name = "WalkSpeed Cheat", code = "{[1] = 'Speed', [2] = 100}"},
-    {name = "Teleport Arg",    code = "{[1] = CFrame.new(0, 100, 0)}"},
-    {name = "Kill Aura",       code = "{[1] = 'Hit', [2] = workspace.Enemy}"},
-    {name = "God Mode Args",   code = "{[1] = true, [2] = 'GodMode'}"},
-    {name = "Reset",           code = "{}"}
-}
-btnTemplates.MouseButton1Click:Connect(function()
-    templateIndex = templateIndex % #templates + 1
-    btnTemplates.Text = templates[templateIndex].name
-    EdMainBox.Text = templates[templateIndex].code
-end)
-btnBeauty.MouseButton1Click:Connect(function()
-    local s, res = pcall(function() return loadstring("return " .. EdMainBox.Text)() end)
-    if s and typeof(res) == "table" then EdMainBox.Text = yinetsuBeautify(res) end
-end)
-btnMinify.MouseButton1Click:Connect(function()
-    local s, res = pcall(function() return loadstring("return " .. EdMainBox.Text)() end)
-    if s and typeof(res) == "table" then EdMainBox.Text = v2s(res) end
-end)
-
--- ============================================================
--- CHEAT WINDOW (Standalone floating)
--- ============================================================
-local CheatFrame = Instance.new("Frame", ScreenGui)
-CheatFrame.Name = "YinetsuCheats"
-CheatFrame.Size = UDim2.new(0, 260, 0, 260)
-CheatFrame.Position = UDim2.new(0.5, 400, 0.5, -130)
-CheatFrame.BackgroundColor3 = CurrentTheme.Background
-CheatFrame.BorderSizePixel = 0
-CheatFrame.Visible = false
-CheatFrame.Active = true
-CheatFrame.Draggable = true
-CheatFrame.ZIndex = 90
-makeCorner(CheatFrame, 14)
-local cfStroke = makeGradientStroke(CheatFrame, CurrentTheme.Accent, CurrentTheme.Highlight, 1.5, 60)
-registerThemed(CheatFrame, "BackgroundColor3", "Background")
-
-local CheatTitle = Instance.new("TextLabel", CheatFrame)
-CheatTitle.Size = UDim2.new(1, -60, 0, 32)
-CheatTitle.Position = UDim2.new(0, 14, 0, 6)
-CheatTitle.BackgroundTransparency = 1
-CheatTitle.Text = "YINETSU CHEATS"
-CheatTitle.TextColor3 = CurrentTheme.Accent
-CheatTitle.Font = Enum.Font.GothamBlack
-CheatTitle.TextSize = 13
-CheatTitle.TextXAlignment = Enum.TextXAlignment.Left
-registerThemed(CheatTitle, "TextColor3", "Accent")
-
-local cfClose = Instance.new("TextButton", CheatFrame)
-cfClose.Size = UDim2.new(0, 22, 0, 22)
-cfClose.Position = UDim2.new(1, -32, 0, 10)
-cfClose.BackgroundColor3 = CurrentTheme.PanelAlt
-cfClose.Text = "✕"
-cfClose.TextColor3 = CurrentTheme.Text
-cfClose.Font = Enum.Font.GothamBold
-cfClose.TextSize = 11
-cfClose.AutoButtonColor = false
-cfClose.BorderSizePixel = 0
-makeCorner(cfClose, 6)
-registerThemed(cfClose, "BackgroundColor3", "PanelAlt")
-registerThemed(cfClose, "TextColor3", "Text")
-makeButtonPremium(cfClose, {color = CurrentTheme.PanelAlt, accent = CurrentTheme.Danger})
-cfClose.MouseButton1Click:Connect(function() CheatFrame.Visible = false end)
-
-local cfList = Instance.new("Frame", CheatFrame)
-cfList.Size = UDim2.new(1, -20, 1, -50)
-cfList.Position = UDim2.new(0, 10, 0, 42)
-cfList.BackgroundTransparency = 1
-local cfLayout = Instance.new("UIListLayout", cfList)
-cfLayout.Padding = UDim.new(0, 6)
-
-local function cfBtn(text, col)
-    local b = Instance.new("TextButton", cfList)
-    b.Size = UDim2.new(1, 0, 0, 30)
-    b.BackgroundColor3 = col or CurrentTheme.PanelAlt
-    b.Text = text
-    b.TextColor3 = CurrentTheme.Text
-    b.Font = Enum.Font.GothamBold
-    b.TextSize = 10
-    b.AutoButtonColor = false
-    b.BorderSizePixel = 0
-    makeCorner(b, 8)
-    local s = makeStroke(b, CurrentTheme.Border, 1, 0.6)
-    registerThemed(b, "BackgroundColor3", "PanelAlt")
-    registerThemed(b, "TextColor3", "Text")
-    registerThemed(s, "Color", "Border")
-    makeButtonPremium(b, {color = CurrentTheme.PanelAlt})
-    return b
-end
-
-local bNegate = cfBtn("NEGATE ARGS (Money Glitch)")
-local bMultiply = cfBtn("MULTIPLY x9999 (Sell Glitch)")
-local bScanner = cfBtn("SCAN REWARD REMOTES")
-
-bNegate.MouseButton1Click:Connect(function()
-    negateActive = not negateActive
-    bNegate.Text = negateActive and "NEGATE ARGS: ON" or "NEGATE ARGS (Money Glitch)"
-    tw(bNegate, 0.2, {BackgroundColor3 = negateActive and CurrentTheme.Success or CurrentTheme.PanelAlt})
-end)
-bMultiply.MouseButton1Click:Connect(function()
-    multActive = not multActive
-    bMultiply.Text = multActive and "MULTIPLY: ON" or "MULTIPLY x9999 (Sell Glitch)"
-    tw(bMultiply, 0.2, {BackgroundColor3 = multActive and CurrentTheme.Success or CurrentTheme.PanelAlt})
-end)
-bScanner.MouseButton1Click:Connect(function()
-    bScanner.Text = "SCANNING..."
-    local found = 0
-    local targets = {"Reward", "Claim", "Cash", "Money", "Collect", "Buy", "Purchase"}
-    local function scan(inst)
-        for _, v in pairs(inst:GetDescendants()) do
-            if v:IsA("RemoteEvent") or v:IsA("RemoteFunction") then
-                for _, key in pairs(targets) do
-                    if v.Name:match(key) then
-                        addLog(v, {"[YINETSU SCAN FOUND]"}, true)
-                        found = found + 1
-                    end
-                end
-            end
-        end
-    end
-    pcall(function() scan(ReplicatedStorage) end)
-    pcall(function() scan(workspace) end)
-    bScanner.Text = "FOUND: " .. found
-    task.wait(2)
-    bScanner.Text = "SCAN REWARD REMOTES"
-end)
-
--- ============================================================
--- SAVE POPUP
--- ============================================================
-local SavePopup = Instance.new("Frame", ScreenGui)
-SavePopup.Size = UDim2.new(0, 240, 0, 130)
-SavePopup.AnchorPoint = Vector2.new(0.5, 0.5)
-SavePopup.Position = UDim2.new(0.5, 0, 0.5, 0)
-SavePopup.BackgroundColor3 = CurrentTheme.Background
-SavePopup.BorderSizePixel = 0
-SavePopup.Visible = false
-SavePopup.ZIndex = 200
-makeCorner(SavePopup, 12)
-local saveStroke = makeGradientStroke(SavePopup, CurrentTheme.Border, CurrentTheme.Highlight, 1.4, 45)
-registerThemed(SavePopup, "BackgroundColor3", "Background")
-
-local SaveIn = Instance.new("TextBox", SavePopup)
-SaveIn.Size = UDim2.new(0.9, 0, 0, 32)
-SaveIn.Position = UDim2.new(0.05, 0, 0.15, 0)
-SaveIn.PlaceholderText = "Enter Filename..."
-SaveIn.PlaceholderColor3 = CurrentTheme.TextDim
-SaveIn.BackgroundColor3 = CurrentTheme.Panel
-SaveIn.Text = ""
-SaveIn.TextColor3 = CurrentTheme.Text
-SaveIn.Font = Enum.Font.Gotham
-SaveIn.TextSize = 11
-SaveIn.TextXAlignment = Enum.TextXAlignment.Left
-SaveIn.ClearTextOnFocus = false
-makeCorner(SaveIn, 8)
-makePadding(SaveIn, 10)
-registerThemed(SaveIn, "BackgroundColor3", "Panel")
-registerThemed(SaveIn, "TextColor3", "Text")
-
-local SaveDone = Instance.new("TextButton", SavePopup)
-SaveDone.Size = UDim2.new(0.43, 0, 0, 30)
-SaveDone.Position = UDim2.new(0.52, 0, 0.65, 0)
-SaveDone.Text = "DONE"
-SaveDone.BackgroundColor3 = CurrentTheme.PanelAlt
-SaveDone.TextColor3 = CurrentTheme.Success
-SaveDone.Font = Enum.Font.GothamBold
-SaveDone.TextSize = 11
-SaveDone.AutoButtonColor = false
-SaveDone.BorderSizePixel = 0
-makeCorner(SaveDone, 8)
-registerThemed(SaveDone, "BackgroundColor3", "PanelAlt")
-registerThemed(SaveDone, "TextColor3", "Success")
-makeButtonPremium(SaveDone, {color = CurrentTheme.PanelAlt})
-
-local SaveBack = Instance.new("TextButton", SavePopup)
-SaveBack.Size = UDim2.new(0.43, 0, 0, 30)
-SaveBack.Position = UDim2.new(0.05, 0, 0.65, 0)
-SaveBack.Text = "BACK"
-SaveBack.BackgroundColor3 = CurrentTheme.PanelAlt
-SaveBack.TextColor3 = CurrentTheme.Danger
-SaveBack.Font = Enum.Font.GothamBold
-SaveBack.TextSize = 11
-SaveBack.AutoButtonColor = false
-SaveBack.BorderSizePixel = 0
-makeCorner(SaveBack, 8)
-registerThemed(SaveBack, "BackgroundColor3", "PanelAlt")
-registerThemed(SaveBack, "TextColor3", "Danger")
-makeButtonPremium(SaveBack, {color = CurrentTheme.PanelAlt})
-
--- ============================================================
--- WIRE UP ALL GRID BUTTONS (original logic preserved)
--- ============================================================
-bSaveFile.MouseButton1Click:Connect(function()
-    multiMode = true
-    SavePopup.Visible = true
-    SaveIn.Text = ""
-    updateLogHighlights()
-end)
-SaveBack.MouseButton1Click:Connect(function()
-    SavePopup.Visible = false
-    multiMode = false
-    updateLogHighlights()
-end)
-SaveDone.MouseButton1Click:Connect(function()
-    if SaveIn.Text ~= "" and #multiList > 0 then
-        local filename = SaveIn.Text:gsub("[^%w_%-]", "")
-        if filename == "" then filename = "unnamed" end
-        local data = {}
-        for _, item in ipairs(multiList) do
-            table.insert(data, {name = item.remote.Name, args = item.args})
-        end
-        pcall(function()
-            writefile(gPath.."/"..filename..".json", HttpService:JSONEncode(data))
-        end)
-        SaveDone.Text = "SAVED!"
-        task.wait(1)
-        SavePopup.Visible = false
-        multiMode = false
-        for _, item in ipairs(multiList) do
-            if remoteLogs[item.key] and remoteLogs[item.key].button and remoteLogs[item.key].button.Parent then
-                remoteLogs[item.key].button.BackgroundColor3 = remoteLogs[item.key].origCol
-            end
-        end
-        multiList = {}
-        updateLogHighlights()
-        SaveDone.Text = "DONE"
-    end
-end)
-
-b4.MouseButton1Click:Connect(function()
-    if selectedRemote and selectedRemote.Parent then
-        setclipboard("-- Script for: " .. selectedRemote.Name .. "\n" .. CodeView.Text)
-    end
-end)
-
-b5.MouseButton1Click:Connect(function()
-    if selectedRemote and selectedRemote.Parent then
-        CodeView.Text = "-- YINETSU REMOTE INFO --\nName: "..selectedRemote.Name.."\nPath: "..selectedRemote:GetFullName().."\nClass: "..selectedRemote.ClassName.."\nArgs Count: "..#selectedArgs
-    end
-end)
-
-bDecompile.MouseButton1Click:Connect(function()
-    if selectedRemote and selectedRemote.Parent then
-        local genScript = "-- [[ GENERATED BY YINETSU SPY ]]\n\n"
-        genScript = genScript .. "local Remote = " .. selectedRemote:GetFullName() .. "\n"
-        genScript = genScript .. "local args = " .. yinetsuBeautify(selectedArgs) .. "\n\n"
-        genScript = genScript .. "Remote:" .. (selectedRemote.ClassName == "RemoteEvent" and "FireServer" or "InvokeServer") .. "(unpack(args))\n"
-        CodeView.Text = genScript
-    end
-end)
-
-bYT.MouseButton1Click:Connect(function()
-    pcall(function() setclipboard("https://youtube.com/@yinetsu?si=9QWyONQPsv9pMbsk") end)
-end)
-
-b1.MouseButton1Click:Connect(function() pcall(function() setclipboard(CodeView.Text) end) end)
-
-b2.MouseButton1Click:Connect(function()
-    if selectedRemote and selectedRemote.Parent then
-        pcall(function() setclipboard(selectedRemote:GetFullName()) end)
-    end
-end)
-
-b3.MouseButton1Click:Connect(function()
-    if multiMode then
-        for _, d in pairs(multiList) do
-            task.spawn(function()
-                pcall(function()
-                    if d.remote and d.remote.Parent then
-                        if d.remote.ClassName == "RemoteEvent" then
-                            d.remote:FireServer(unpack(d.args))
-                        else
-                            d.remote:InvokeServer(unpack(d.args))
-                        end
-                    end
-                end)
-            end)
-        end
-    elseif selectedRemote and selectedRemote.Parent then
-        pcall(function()
-            if selectedRemote.ClassName == "RemoteEvent" then
-                selectedRemote:FireServer(unpack(selectedArgs))
-            else
-                selectedRemote:InvokeServer(unpack(selectedArgs))
-            end
-        end)
-    end
-end)
-
-b6.MouseButton1Click:Connect(clearLogsFunc)
-
-b7.MouseButton1Click:Connect(function() if selectedRemote then blacklist[selectedRemote] = true end end)
-b8.MouseButton1Click:Connect(function() if selectedRemote then blacklist[selectedRemote.Name] = true end end)
-b10.MouseButton1Click:Connect(function() if selectedRemote then blocklist[selectedRemote] = true end end)
-b11.MouseButton1Click:Connect(function() if selectedRemote then blocklist[selectedRemote.Name] = true end end)
-
-bMulti.MouseButton1Click:Connect(function()
-    multiMode = not multiMode
-    tw(bMulti, 0.2, {BackgroundColor3 = multiMode and Color3.fromRGB(0, 120, 255) or CurrentTheme.PanelAlt})
-    if not multiMode then
-        multiList = {}
-        CodeView.Text = ""
-    end
-    updateLogHighlights()
-end)
-
-bClearMulti.MouseButton1Click:Connect(function()
-    multiList = {}
-    CodeView.Text = ""
-    updateLogHighlights()
-end)
-
-bOpenEd.MouseButton1Click:Connect(function()
-    EditorMain.Visible = true
-    if selectedArgs then EdMainBox.Text = yinetsuBeautify(selectedArgs) end
-end)
-
-bToggleEBtn.MouseButton1Click:Connect(function()
-    ToggleEdBtn.Visible = not ToggleEdBtn.Visible
-    bToggleEBtn.Text = ToggleEdBtn.Visible and "Editor Icon: ON" or "Editor Icon: OFF"
-end)
-
-b9.MouseButton1Click:Connect(function()
-    looping = not looping
-    b9.Text = looping and "STOP" or "Loop"
-    task.spawn(function()
-        while looping and getgenv().YinetsuUIActive do
-            if multiMode then
-                for _, d in pairs(multiList) do
-                    task.spawn(function()
-                        pcall(function()
-                            if d.remote and d.remote.Parent then
-                                if d.remote.ClassName == "RemoteEvent" then
-                                    d.remote:FireServer(unpack(d.args))
-                                else
-                                    d.remote:InvokeServer(unpack(d.args))
-                                end
-                            end
-                        end)
-                    end)
-                end
-            elseif selectedRemote and selectedRemote.Parent then
-                pcall(function()
-                    if selectedRemote.ClassName == "RemoteEvent" then
-                        selectedRemote:FireServer(unpack(selectedArgs))
-                    else
-                        selectedRemote:InvokeServer(unpack(selectedArgs))
-                    end
-                end)
-            end
-            task.wait(tonumber(SpeedBox.Text) or 0.1)
-        end
-    end)
-end)
-
-b13.MouseButton1Click:Connect(function()
-    autoClear = not autoClear
-    b13.Text = autoClear and "STOP CLR" or "Loop Clr"
-    task.spawn(function()
-        while autoClear and getgenv().YinetsuUIActive do
-            clearLogsFunc()
-            task.wait(tonumber(ClearSpeedBox.Text) or 1)
-        end
-    end)
-end)
-
-local playingSeq = false
-bPlaySeq.MouseButton1Click:Connect(function()
-    if #recordedSeq == 0 then return end
-    playingSeq = not playingSeq
-    bPlaySeq.Text = playingSeq and "STOP SEQ" or "Play Seq"
-    task.spawn(function()
-        while playingSeq and getgenv().YinetsuUIActive do
-            for _, item in ipairs(recordedSeq) do
-                if not playingSeq then break end
-                pcall(function()
-                    if item.remote and item.remote.Parent then
-                        if item.remote.ClassName == "RemoteEvent" then
-                            item.remote:FireServer(unpack(item.args))
-                        else
-                            item.remote:InvokeServer(unpack(item.args))
-                        end
-                    end
-                end)
-                task.wait(tonumber(SeqSpeedBox.Text) or 0.1)
-            end
-        end
-    end)
-end)
-
-b12.MouseButton1Click:Connect(function()
-    looping = false
-    autoClear = false
-    playingSeq = false
-    getgenv().YinetsuUIActive = false
-    if originalHook then
-        hookmetamethod(game, "__namecall", originalHook)
-    end
-    pcall(function() FloatUI:Destroy() end)
-    pcall(function() ScreenGui:Destroy() end)
-    getgenv().YinetsuExecuted = false
-end)
-
-bClearFilters.MouseButton1Click:Connect(function()
-    blacklist = {}
-    blocklist = {}
-    bClearFilters.Text = "Cleared!"
-    task.wait(1)
-    bClearFilters.Text = "Reset Filters"
-end)
-
-bBlockSpam.MouseButton1Click:Connect(function()
-    spamBlock = not spamBlock
-    bBlockSpam.Text = spamBlock and "Anti-Spam: ON" or "Block Spam"
-    tw(bBlockSpam, 0.2, {BackgroundColor3 = spamBlock and Color3.fromRGB(0, 255, 100) or Color3.fromRGB(200, 100, 0)})
-end)
-
-bSpam50.MouseButton1Click:Connect(function()
-    if selectedRemote and selectedRemote.Parent then
-        bSpam50.Text = "SPAMMING..."
-        for i = 1, 50 do
-            pcall(function()
-                if selectedRemote.ClassName == "RemoteEvent" then
-                    selectedRemote:FireServer(unpack(selectedArgs))
-                else
-                    selectedRemote:InvokeServer(unpack(selectedArgs))
-                end
-            end)
-            task.wait()
-        end
-        bSpam50.Text = "Spam 50x"
-    end
-end)
-
-bRecord.MouseButton1Click:Connect(function()
-    recording = not recording
-    bRecord.Text = recording and "Recording..." or "Rec Seq"
-    tw(bRecord, 0.2, {BackgroundColor3 = recording and Color3.fromRGB(255, 0, 0) or Color3.fromRGB(255, 100, 100)})
-    if recording then recordedSeq = {} end
-end)
-
-bMakeScript.MouseButton1Click:Connect(function()
-    if #recordedSeq == 0 then return end
-    local finalScript = "-- [[ GENERATED BY YINETSU SPY ]]\n\n"
-    finalScript = finalScript .. "local running = true\n"
-    finalScript = finalScript .. "while running and task.wait(0.1) do\n"
-    for _, item in ipairs(recordedSeq) do
-        local args = v2s(item.args)
-        local call = (item.remote.ClassName == "RemoteEvent" and "FireServer" or "InvokeServer")
-        finalScript = finalScript .. string.format("    game:GetService('ReplicatedStorage').%s:%s(unpack(%s))\n", item.remote.Name, call, args)
-    end
-    finalScript = finalScript .. "end"
-    pcall(function() setclipboard(finalScript) end)
-    bMakeScript.Text = "COPIED!"
-    task.wait(1)
-    bMakeScript.Text = "Make Script"
-end)
-
-bSniper.MouseButton1Click:Connect(function()
+btnSniper.Activated:Connect(function()
     sniperMode = not sniperMode
-    bSniper.Text = sniperMode and "SNIPER: ON" or "Sniper: OFF"
-    tw(bSniper, 0.2, {BackgroundColor3 = sniperMode and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 255)})
-    if sniperMode then clearLogsFunc() end
+    btnSniper.Text = sniperMode and "Sniper: ON" or "Sniper"
+    if sniperMode then
+        for _, v in pairs(RemoteLogScroll:GetChildren()) do
+            if v:IsA("TextButton") then v:Destroy() end
+        end
+        remoteLogs = {}; logQueue = {}
+    end
 end)
 
-bCheatMenu.MouseButton1Click:Connect(function() CheatFrame.Visible = not CheatFrame.Visible end)
-
-bScanAll.MouseButton1Click:Connect(function()
-    bScanAll.Text = "SCANNING..."
+btnScanAll.Activated:Connect(function()
     local filter = SearchBar.Text:lower()
     local count = 0
     local scanned = {}
@@ -2246,45 +1570,28 @@ bScanAll.MouseButton1Click:Connect(function()
             end
         end
     end
-    pcall(function() scanAll(ReplicatedStorage) end)
-    pcall(function() scanAll(workspace) end)
-    pcall(function() scanAll(Players) end)
-    bScanAll.Text = "ADDED " .. count
-    task.wait(1.5)
-    bScanAll.Text = "Scan All"
+    scanAll(ReplicatedStorage); scanAll(workspace); scanAll(Players)
+    addSysLog("Scan complete: "..count.." remotes.", "SPY")
 end)
 
-bRunAllLogs.MouseButton1Click:Connect(function()
-    bRunAllLogs.Text = "RUNNING..."
-    local logsToRun = {}
-    for key, entry in pairs(remoteLogs) do
-        if entry.remote and entry.remote.Parent then
-            table.insert(logsToRun, {remote = entry.remote, args = entry.args})
-        end
+btnCopyAll.Activated:Connect(function()
+    local out = ""
+    for _, e in pairs(remoteLogs) do
+        out = out..(e.code or "").."\n\n"
     end
-    for i, item in ipairs(logsToRun) do
-        pcall(function()
-            if item.remote.ClassName == "RemoteEvent" then
-                item.remote:FireServer(unpack(item.args))
-            else
-                item.remote:InvokeServer(unpack(item.args))
-            end
-        end)
-        if i % 10 == 0 then task.wait() end
-    end
-    bRunAllLogs.Text = "FINISHED"
-    task.wait(1)
-    bRunAllLogs.Text = "Run All Logs"
+    if out == "" then out = "-- No logs." end
+    setclipboard(out)
+    addSysLog("Copied all logs.", "SPY")
 end)
 
--- ============================================================
--- MODIFIER HOOK (original)
--- ============================================================
-local originalHook = nil
+--==============================================================
+-- HOOK
+--==============================================================
 local hookSuccess, hookError = pcall(function()
     originalHook = hookmetamethod(game, "__namecall", function(self, ...)
         local method = getnamecallmethod()
-        if getgenv().YinetsuExecuted and not checkcaller() and (method == "FireServer" or method == "InvokeServer") then
+        if getgenv().YinetsuExecuted and not checkcaller()
+            and (method == "FireServer" or method == "InvokeServer") then
             if blocklist[self] or blocklist[self.Name] then
                 if method == "InvokeServer" then return coroutine.yield() end
                 return nil
@@ -2302,8 +1609,8 @@ local hookSuccess, hookError = pcall(function()
                     local valType = type(v)
                     if modifierActive and targetIsSet and tostring(v) == cachedModTarget then
                         if valType == "number" then
-                            local numOverride = tonumber(cachedModReplace)
-                            if numOverride then args[i] = numOverride; signalModified = true end
+                            local n2 = tonumber(cachedModReplace)
+                            if n2 then args[i] = n2; signalModified = true end
                         elseif valType == "boolean" then
                             if cachedModReplace:lower() == "true" then args[i] = true; signalModified = true
                             elseif cachedModReplace:lower() == "false" then args[i] = false; signalModified = true end
@@ -2313,7 +1620,7 @@ local hookSuccess, hookError = pcall(function()
                     end
                     if type(args[i]) == "number" then
                         if negateActive and args[i] > 0 then args[i] = -math.abs(args[i]); signalModified = true end
-                        if multActive then args[i] = args[i] * 999999; signalModified = true end
+                        if multActive then args[i] = args[i]*999999; signalModified = true end
                     end
                 end
             end
@@ -2324,92 +1631,305 @@ local hookSuccess, hookError = pcall(function()
         return originalHook(self, ...)
     end)
 end)
+if not hookSuccess then warn("Yinetsu: hook failed: "..tostring(hookError)) end
 
-if not hookSuccess then
-    warn("Yinetsu: Failed to hook __namecall: " .. tostring(hookError))
-end
-
-RunService.Heartbeat:Connect(function()
+track(RunService.Heartbeat:Connect(function()
     while #scheduled > 0 do
         local data = table.remove(scheduled, 1)
-        addLog(data.remote, data.args, false)
+        pcall(function() addLog(data.remote, data.args, false) end)
     end
-    if LogsScroll and LogsScroll.Parent then
-        LogsScroll.CanvasSize = UDim2.new(0, 0, 0, LogsLayout.AbsoluteContentSize.Y)
-    end
-end)
+end))
 
--- ============================================================
--- FLOAT TOGGLE + EDITOR TOGGLE
--- ============================================================
-ToggleBtn.MouseButton1Click:Connect(function()
-    Main.Visible = not Main.Visible
-    mainShadow.Visible = Main.Visible
-end)
-ToggleEdBtn.MouseButton1Click:Connect(function()
-    EditorMain.Visible = not EditorMain.Visible
-end)
-
-closeBtn.MouseButton1Click:Connect(function()
-    tw(Main, 0.3, {Size = UDim2.new(0, 0, 0, 0)}, Enum.EasingStyle.Back, Enum.EasingDirection.In)
-    tw(mainShadow, 0.3, {Size = UDim2.new(0, 0, 0, 0)}, Enum.EasingStyle.Back, Enum.EasingDirection.In)
-    task.wait(0.35)
-    Main.Visible = false
-    mainShadow.Visible = false
-    Main.Size = UDim2.new(0, 720, 0, 440)
-    mainShadow.Size = UDim2.new(0, 760, 0, 480)
-end)
-
--- ============================================================
--- AUTO-LOAD
--- ============================================================
-pcall(function()
-    if isfile(autoLoadPath) then
-        local autoData = HttpService:JSONDecode(readfile(autoLoadPath))
-        local fPath = gPath .. "/" .. autoData.file
-        if isfile(fPath) then
-            local data = HttpService:JSONDecode(readfile(fPath))
-            for _, d in pairs(data) do
-                local r = game:GetService("ReplicatedStorage"):FindFirstChild(d.name, true)
-                if r then addLog(r, d.args, true) end
+--==============================================================
+-- THEME APPLICATION (fully registry-based)
+--==============================================================
+function applyThemeToAll()
+    local ti = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+    for _, entry in ipairs(themeRegistry) do
+        local el = entry.el
+        if el and el.Parent then
+            local color = currentTheme[entry.role]
+            if color then
+                if entry.kind == "bg" then
+                    TweenService:Create(el, ti, {BackgroundColor3 = color}):Play()
+                elseif entry.kind == "text" then
+                    TweenService:Create(el, ti, {TextColor3 = color}):Play()
+                elseif entry.kind == "stroke" then
+                    TweenService:Create(el, ti, {Color = color}):Play()
+                elseif entry.kind == "placeholder" then
+                    TweenService:Create(el, ti, {PlaceholderColor3 = color}):Play()
+                end
             end
-            CodeView.Text = "-- [AUTO LOADED]: " .. autoData.file
+        end
+    end
+    -- Update chroma gradients
+    for _, item in ipairs(chromaStrokes) do
+        if item.Stroke and item.Stroke.Parent then
+            item.Stroke.Color = currentTheme.Accent
+            if item.Gradient then
+                item.Gradient.Color = ColorSequence.new({
+                    ColorSequenceKeypoint.new(0, currentTheme.Accent),
+                    ColorSequenceKeypoint.new(0.5, currentTheme.AccentAlt),
+                    ColorSequenceKeypoint.new(1, currentTheme.Accent),
+                })
+            end
+        end
+    end
+    -- Refresh scrollbar colors
+    if RemoteLogScroll then RemoteLogScroll.ScrollBarImageColor3 = currentTheme.Accent end
+    for _, pg in pairs(Pages) do pcall(function() pg.ScrollBarImageColor3 = currentTheme.Accent end) end
+end
+
+local function applyTheme(themeName)
+    local theme = Themes[themeName]
+    if not theme then return end
+    currentThemeName = themeName
+    currentTheme = theme
+    applyThemeToAll()
+    ThemeStatus.Text = "Current: "..themeName
+    addSysLog("Theme changed to "..themeName, "UI")
+end
+
+-- Build theme buttons
+local themeOrder = {}
+for name, _ in pairs(Themes) do table.insert(themeOrder, name) end
+table.sort(themeOrder)
+
+for i, name in ipairs(themeOrder) do
+    local b = premiumBtn(ThemeGrid, name, UDim2.new(), UDim2.new(), function()
+        applyTheme(name)
+        refreshColorInputs()
+    end)
+    b.LayoutOrder = i
+end
+
+--==============================================================
+-- PERFORMANCE MONITOR
+--==============================================================
+track(RunService.RenderStepped:Connect(function()
+    fpsCounter = fpsCounter + 1
+    local now = os.clock()
+    if now - lastFPSUpdate >= 1 then
+        currentFPS = fpsCounter / (now - lastFPSUpdate)
+        fpsCounter = 0
+        lastFPSUpdate = now
+    end
+    for _, item in ipairs(chromaStrokes) do
+        if item.Gradient and item.Gradient.Parent then
+            item.Gradient.Rotation = (item.Gradient.Rotation + CONFIG.ChromaSpeed) % 360
+        end
+    end
+end))
+
+local function readPing()
+    local ok, res = pcall(function()
+        local n = Stats:FindFirstChild("Network")
+        if not n then return nil end
+        local ss = n:FindFirstChild("ServerStatsItem")
+        if not ss then return nil end
+        local p = ss:FindFirstChild("Data Ping")
+        if p then return p:GetValueString() end
+    end)
+    return (ok and res) and tostring(res) or "N/A"
+end
+
+local function fmtClock(s)
+    s = math.max(0, math.floor(s))
+    return string.format("%02d:%02d:%02d", math.floor(s/3600), math.floor((s%3600)/60), s%60)
+end
+
+task.spawn(function()
+    while not isDestroyed and ScreenGui.Parent do
+        local elapsed = os.clock() - appStartedAt
+        local mem = "N/A"
+        local ok, r = pcall(function() return Stats:GetTotalMemoryUsageMb() end)
+        if ok and type(r) == "number" then mem = string.format("%.1f MB", r) end
+
+        if FPSValue then
+            FPSValue.Text = string.format("%.0f FPS", currentFPS)
+            PingValue.Text = readPing()
+            MemoryValue.Text = mem
+            ClockValue.Text = fmtClock(elapsed)
+            RemotesValue.Text = tostring(#logQueue)
+            PlaceValue.Text = tostring(game.PlaceId)
+            PlayersValue.Text = tostring(#Players:GetPlayers())
+        end
+        if HomeFPSValue then HomeFPSValue.Text = string.format("%.0f", currentFPS) end
+        if SessionClock then SessionClock.Text = "Session: "..fmtClock(elapsed) end
+        task.wait(CONFIG.MonitorInterval)
+    end
+end)
+
+--==============================================================
+-- RESPONSIVE
+--==============================================================
+local function updateResponsive()
+    local cam = workspace.CurrentCamera
+    if not cam then return end
+    local vp = cam.ViewportSize
+    local w = math.clamp(vp.X - 24, CONFIG.MinWidth, CONFIG.MainWidth)
+    local h = math.clamp(vp.Y - 48, CONFIG.MinHeight, CONFIG.MainHeight)
+    Main.Size = UDim2.new(0, w, 0, h)
+
+    local compact = vp.X < 900
+    Navigation.Size = UDim2.new(0, compact and 130 or 175, 1, -102)
+    Content.Position = UDim2.new(0, compact and 156 or 201, 0, 88)
+    Content.Size = UDim2.new(1, compact and -170 or -215, 1, -102)
+    HeaderTitle.TextSize = compact and 14 or 17
+end
+
+if workspace.CurrentCamera then
+    track(workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(updateResponsive))
+end
+track(workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(function()
+    if workspace.CurrentCamera then
+        track(workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(updateResponsive))
+        updateResponsive()
+    end
+end))
+
+--==============================================================
+-- SAVE POPUP (for multi save)
+--==============================================================
+local SavePopup = create("Frame", {
+    Size = UDim2.new(0, 280, 0, 150), Position = UDim2.fromScale(0.5, 0.5),
+    AnchorPoint = Vector2.new(0.5, 0.5),
+    BackgroundColor3 = currentTheme.Surface, Visible = false, ZIndex = 100,
+}, ScreenGui)
+reg(SavePopup, "bg", "Surface")
+corner(SavePopup, 12); stroke(SavePopup, "Accent", 1.5, 0.1, true)
+
+label(SavePopup, "Save Multi Selection", UDim2.new(1, -24, 0, 24), UDim2.new(0, 12, 0, 12), 13, "AccentAlt")
+
+local SaveIn = create("TextBox", {
+    Size = UDim2.new(1, -24, 0, 36), Position = UDim2.new(0, 12, 0, 46),
+    BackgroundColor3 = currentTheme.SurfaceAlt, BorderSizePixel = 0,
+    PlaceholderText = "Filename...", PlaceholderColor3 = currentTheme.Muted,
+    Text = "", TextColor3 = currentTheme.Text,
+    Font = Enum.Font.Gotham, TextSize = 12, ClearTextOnFocus = false, ZIndex = 101,
+}, SavePopup)
+reg(SaveIn, "bg", "SurfaceAlt"); reg(SaveIn, "text", "Text"); reg(SaveIn, "placeholder", "Muted")
+corner(SaveIn, 8); padding(SaveIn, 10, 10, 0, 0)
+
+local SaveDone = premiumBtn(SavePopup, "Save", UDim2.new(0, 118, 0, 36), UDim2.new(0, 12, 0, 100), nil)
+local SaveBack = premiumBtn(SavePopup, "Cancel", UDim2.new(0, 118, 0, 36), UDim2.new(1, -130, 0, 100), nil)
+
+SaveBack.Activated:Connect(function()
+    SavePopup.Visible = false
+    multiMode = false
+    updateMultiHighlights()
+end)
+SaveDone.Activated:Connect(function()
+    if SaveIn.Text ~= "" and #multiList > 0 then
+        local fn = SaveIn.Text:gsub("[^%w_%-]", "")
+        if fn == "" then fn = "unnamed" end
+        local data = {}
+        for _, item in ipairs(multiList) do
+            table.insert(data, {name = item.remote.Name, args = item.args})
+        end
+        pcall(function()
+            writefile(gPath.."/"..fn..".json", HttpService:JSONEncode(data))
+            addSysLog("Saved file: "..fn..".json", "FILE")
+        end)
+        SavePopup.Visible = false
+        multiMode = false
+        multiList = {}
+        updateMultiHighlights()
+    end
+end)
+
+-- Wire "Save" button in spy row (the one that opens the popup)
+for _, v in pairs(runRow:GetChildren()) do
+    if v:IsA("TextButton") and v.Text == "Save" then
+        v.Activated:Connect(function()
+            multiMode = true
+            SavePopup.Visible = true
+            SaveIn.Text = ""
+            updateMultiHighlights()
+        end)
+    end
+end
+
+--==============================================================
+-- LOAD SAVED THEME ON START
+--==============================================================
+pcall(function()
+    if isfile(settingsPath) then
+        local d = HttpService:JSONDecode(readfile(settingsPath))
+        if d.colors then
+            for role, hex in pairs(d.colors) do
+                local c = hexToColor(hex)
+                if c then currentTheme[role] = c end
+            end
+            currentThemeName = d.theme or "Custom"
+            applyThemeToAll()
+            refreshColorInputs()
+            ThemeStatus.Text = "Current: "..currentThemeName
         end
     end
 end)
 
--- ============================================================
--- ANTI-AFK (original)
--- ============================================================
-task.spawn(function()
-    while getgenv().YinetsuUIActive and task.wait(120) do
-        pcall(function()
-            VirtualUser:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
-            task.wait(0.2)
-            VirtualUser:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
-        end)
+--==============================================================
+-- FILE AUTO-LOAD
+--==============================================================
+pcall(function()
+    if isfile(autoLoadPath) then
+        local autoData = HttpService:JSONDecode(readfile(autoLoadPath))
+        local fPath = gPath.."/"..autoData.file
+        if isfile(fPath) then
+            local data = HttpService:JSONDecode(readfile(fPath))
+            for _, d in pairs(data) do
+                local r = ReplicatedStorage:FindFirstChild(d.name, true)
+                if r then addLog(r, d.args, true) end
+            end
+            CodeView.Text = "-- [AUTO LOADED]: "..autoData.file
+        end
     end
 end)
 
--- ============================================================
--- REVEAL MAIN WITH ELASTIC ENTRANCE
--- ============================================================
-local function revealMain(
-    Main.Visible = true
-    mainShadow.Visible = true
-    Main.Size = UDim2.new(0, 0, 0, 0)
-    mainShadow.Size = UDim2.new(0, 0, 0, 0)
-    tw(Main, 0.7, {Size = UDim2.new(0, 720, 0, 440)}, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-    tw(mainShadow, 0.7, {Size = UDim2.new(0, 760, 0, 480)}, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-    showPage("Dashboard")
+--==============================================================
+-- FLOATING TOGGLE
+--==============================================================
+ToggleBtn.Activated:Connect(function()
+    Main.Visible = not Main.Visible
+    isMinimized = not Main.Visible
+end)
+
+SettingsQuickBtn.Activated:Connect(function()
+    showPage("Settings")
+end)
+
+--==============================================================
+-- CLEANUP
+--==============================================================
+local function cleanup()
+    if isDestroyed then return end
+    isDestroyed = true
+    if isFPSBoostEnabled then setFPSBoost(false) end
+    for _, c in ipairs(connections) do pcall(function() c:Disconnect() end) end
+    table.clear(connections); table.clear(chromaStrokes)
 end
+track(ScreenGui.Destroying:Connect(cleanup))
 
--- Run intro
-runIntro(function() revealMain() end)
+--==============================================================
+-- INITIALIZE
+--==============================================================
+addSysLog("Yinetsu Spy VIP v2 initialized.", "SYSTEM")
+addSysLog("Player: "..LocalPlayer.Name, "SYSTEM")
+addSysLog("Place ID: "..tostring(game.PlaceId), "SYSTEM")
+addSysLog("Remote hook active.", "SYSTEM")
+addSysLog(#themeOrder.." themes loaded.", "SYSTEM")
 
--- Public API
-getgenv().YinetsuSetTheme = function(name)
-    if Themes[name] then applyTheme(name) end
-end
+updateResponsive()
+showPage("Overview")
 
-print("[YINETSU SPY] Loaded v3.0.1 — Premium UI")
+Main.Visible = true
+TweenService:Create(MainScale, TweenInfo.new(0.38, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Scale = 1}):Play()
+TweenService:Create(LoadingCard, TweenInfo.new(0.22, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
+    {Position = UDim2.fromScale(0.5, 0.46)}):Play()
+
+task.wait(0.24)
+if LoadingFrame and LoadingFrame.Parent then LoadingFrame:Destroy() end
+addSysLog("Intro complete.", "SYSTEM")
+
+print("[YINETSU] Spy VIP v2 loaded — bigger UI, settings page, editable spam, full theme system.")
